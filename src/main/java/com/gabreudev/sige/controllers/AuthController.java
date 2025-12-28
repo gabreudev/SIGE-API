@@ -5,7 +5,7 @@ import com.gabreudev.sige.entities.user.dto.AuthenticationDTO;
 import com.gabreudev.sige.entities.user.dto.LoginResponseDTO;
 import com.gabreudev.sige.infra.SecurityConfigurations;
 import com.gabreudev.sige.infra.TokenService;
-import com.gabreudev.sige.repositories.UserRepository;
+import com.gabreudev.sige.services.UserService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -16,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -29,7 +28,7 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
 
-    private final UserRepository repository;
+    private final UserService userService;
 
     private final TokenService tokenService;
 
@@ -50,12 +49,10 @@ public class AuthController {
     @PostMapping("student/register")
     public ResponseEntity registerStudent(@RequestBody @Valid UserRegisterDTO data){
         try{
-            if(this.repository.findByUsername(data.username()) != null) return ResponseEntity.badRequest().build();
-            String encryptedPassword = new BCryptPasswordEncoder().encode(data.password());
-            User newUser = new User(data.username(), data.email(), encryptedPassword, UserRole.STUDENT, true, data.coren(), data.registration());
-            newUser.setInternshipRole(data.internshipRole());
-            this.repository.save(newUser);
+            userService.registerStudent(data);
             return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Cadastro falhou: " + e.getMessage());
         }
@@ -65,12 +62,10 @@ public class AuthController {
     @PostMapping("admin/register")
     public ResponseEntity registerAdmin(@RequestBody @Valid UserRegisterDTO data){
         try{
-            if(this.repository.findByUsername(data.username()) != null) return ResponseEntity.badRequest().build();
-            String encryptedPassword = new BCryptPasswordEncoder().encode(data.password());
-            User newUser = new User(data.username(), data.email(), encryptedPassword, UserRole.ADMIN, true, data.coren(), data.registration());
-            newUser.setInternshipRole(data.internshipRole());
-            this.repository.save(newUser);
+            userService.registerAdmin(data);
             return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Cadastro falhou: " + e.getMessage());
         }
@@ -80,12 +75,10 @@ public class AuthController {
     @PostMapping("supervisor/register")
     public ResponseEntity registerSupervisor(@RequestBody @Valid UserRegisterDTO data){
         try{
-            if(this.repository.findByUsername(data.username()) != null) return ResponseEntity.badRequest().build();
-            String encryptedPassword = new BCryptPasswordEncoder().encode(data.password());
-            User newUser = new User(data.username(), data.email(), encryptedPassword, UserRole.SUPERVISOR, true, data.coren(), data.registration());
-            newUser.setInternshipRole(data.internshipRole());
-            this.repository.save(newUser);
+            userService.registerSupervisor(data);
             return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Cadastro falhou: " + e.getMessage());
         }
@@ -95,12 +88,10 @@ public class AuthController {
     @PostMapping("preceptor/register")
     public ResponseEntity registerPreceptor(@RequestBody @Valid UserRegisterDTO data){
         try{
-            if(this.repository.findByUsername(data.username()) != null) return ResponseEntity.badRequest().build();
-            String encryptedPassword = new BCryptPasswordEncoder().encode(data.password());
-            User newUser = new User(data.username(), data.email(), encryptedPassword, UserRole.PRECEPTOR, true, data.coren(), data.registration());
-            newUser.setInternshipRole(data.internshipRole());
-            this.repository.save(newUser);
+            userService.registerPreceptor(data);
             return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Cadastro falhou: " + e.getMessage());
         }
