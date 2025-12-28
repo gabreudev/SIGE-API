@@ -56,7 +56,7 @@ public class UserService {
         User savedUser = userRepository.save(newUser);
 
         // Enviar email com a senha
-        mailService.sendPasswordEmail(data.email(), data.username(), randomPassword, "Estudante");
+        //mailService.sendPasswordEmail(data.email(), data.username(), randomPassword, "Estudante");
 
         return savedUser;
     }
@@ -84,7 +84,7 @@ public class UserService {
         User savedUser = userRepository.save(newUser);
 
         // Enviar email com a senha
-        mailService.sendPasswordEmail(data.email(), data.username(), randomPassword, "Supervisor");
+        //mailService.sendPasswordEmail(data.email(), data.username(), randomPassword, "Supervisor");
 
         return savedUser;
     }
@@ -112,7 +112,7 @@ public class UserService {
         User savedUser = userRepository.save(newUser);
 
         // Enviar email com a senha
-        mailService.sendPasswordEmail(data.email(), data.username(), randomPassword, "Preceptor");
+        //mailService.sendPasswordEmail(data.email(), data.username(), randomPassword, "Preceptor");
 
         return savedUser;
     }
