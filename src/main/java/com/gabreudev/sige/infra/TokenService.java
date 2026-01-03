@@ -22,8 +22,10 @@ public class TokenService {
         try{
             Algorithm algorithm = Algorithm.HMAC256(secret);
             String token = JWT.create()
-                    .withIssuer("marketmobile-api")
+                    .withIssuer("sige-api")
                     .withSubject(user.getEmail())
+                    .withClaim("username", user.getUsername())
+                    .withClaim("role", user.getUserRole().name())
                     .withExpiresAt(genExpirationDate())
                     .sign(algorithm);
             return token;
@@ -36,7 +38,7 @@ public class TokenService {
         try {
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return JWT.require(algorithm)
-                    .withIssuer("marketmobile-api")
+                    .withIssuer("sige-api")
                     .build()
                     .verify(token)
                     .getSubject();

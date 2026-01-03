@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @Slf4j
-@Tag(name = "Endpoints de usuario")
+@Tag(name = "Endpoints de autenticação e registro de usuários")
 @SecurityRequirement(name = SecurityConfigurations.SECURITY)
 @RequiredArgsConstructor
 @RequestMapping("auth")

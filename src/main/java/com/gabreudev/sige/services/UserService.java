@@ -3,6 +3,10 @@ package com.gabreudev.sige.services;
 import com.gabreudev.sige.entities.user.User;
 import com.gabreudev.sige.entities.user.UserRegisterDTO;
 import com.gabreudev.sige.entities.user.UserRole;
+import com.gabreudev.sige.entities.user.dto.AdminUpdateDTO;
+import com.gabreudev.sige.entities.user.dto.PreceptorUpdateDTO;
+import com.gabreudev.sige.entities.user.dto.StudentUpdateDTO;
+import com.gabreudev.sige.entities.user.dto.SupervisorUpdateDTO;
 import com.gabreudev.sige.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -138,5 +144,136 @@ public class UserService {
         log.info("Registrando admin: {}", data.username());
         return userRepository.save(newUser);
     }
-}
 
+    public List<User> findUsersByRole(UserRole userRole) {
+        return userRepository.findByUserRole(userRole);
+    }
+
+    public User updateStudent(UUID id, StudentUpdateDTO data) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+
+        if (!user.getUserRole().equals(UserRole.STUDENT)) {
+            throw new IllegalArgumentException("Usuário não é um estudante");
+        }
+
+        if (data.username() != null && !data.username().equals(user.getUsername())) {
+            if (userExists(data.username())) {
+                throw new IllegalArgumentException("Username já existe");
+            }
+            user.setUsername(data.username());
+        }
+
+        if (data.email() != null) {
+            user.setEmail(data.email());
+        }
+
+
+        if (data.registration() != null) {
+            user.setRegistration(data.registration());
+        }
+
+        if (data.internshipRole() != null) {
+            user.setInternshipRole(data.internshipRole());
+        }
+
+        if (data.enabled() != null) {
+            user.setEnabled(data.enabled());
+        }
+
+        log.info("Atualizando estudante: {}", user.getUsername());
+        return userRepository.save(user);
+    }
+
+    public User updateSupervisor(UUID id, SupervisorUpdateDTO data) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+
+        if (!user.getUserRole().equals(UserRole.SUPERVISOR)) {
+            throw new IllegalArgumentException("Usuário não é um supervisor");
+        }
+
+        if (data.username() != null && !data.username().equals(user.getUsername())) {
+            if (userExists(data.username())) {
+                throw new IllegalArgumentException("Username já existe");
+            }
+            user.setUsername(data.username());
+        }
+
+        if (data.email() != null) {
+            user.setEmail(data.email());
+        }
+
+        if (data.coren() != null) {
+            user.setCoren(data.coren());
+        }
+
+
+        if (data.enabled() != null) {
+            user.setEnabled(data.enabled());
+        }
+
+        log.info("Atualizando supervisor: {}", user.getUsername());
+        return userRepository.save(user);
+    }
+
+    public User updatePreceptor(UUID id, PreceptorUpdateDTO data) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+
+        if (!user.getUserRole().equals(UserRole.PRECEPTOR)) {
+            throw new IllegalArgumentException("Usuário não é um preceptor");
+        }
+
+        if (data.username() != null && !data.username().equals(user.getUsername())) {
+            if (userExists(data.username())) {
+                throw new IllegalArgumentException("Username já existe");
+            }
+            user.setUsername(data.username());
+        }
+
+        if (data.email() != null) {
+            user.setEmail(data.email());
+        }
+
+
+        if (data.enabled() != null) {
+            user.setEnabled(data.enabled());
+        }
+
+        log.info("Atualizando preceptor: {}", user.getUsername());
+        return userRepository.save(user);
+    }
+
+    public User updateAdmin(UUID id, AdminUpdateDTO data) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+
+        if (!user.getUserRole().equals(UserRole.ADMIN)) {
+            throw new IllegalArgumentException("Usuário não é um admin");
+        }
+
+        if (data.username() != null && !data.username().equals(user.getUsername())) {
+            if (userExists(data.username())) {
+                throw new IllegalArgumentException("Username já existe");
+            }
+            user.setUsername(data.username());
+        }
+
+        if (data.email() != null) {
+            user.setEmail(data.email());
+        }
+
+        if (data.password() != null && !data.password().isEmpty()) {
+            String encryptedPassword = passwordEncoder.encode(data.password());
+            user.setPassword(encryptedPassword);
+        }
+
+        if (data.enabled() != null) {
+            user.setEnabled(data.enabled());
+        }
+
+        log.info("Atualizando admin: {}", user.getUsername());
+        return userRepository.save(user);
+    }
+}

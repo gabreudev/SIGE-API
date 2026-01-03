@@ -23,7 +23,7 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private String registration;
+    private String registration; // student as matricula and supervisor as siape
 
     private String username;
 
