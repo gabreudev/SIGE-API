@@ -150,13 +150,14 @@ public class UserService {
         return userRepository.findByUserRole(userRole);
     }
 
-    public User updateStudent(UUID id, StudentUpdateDTO data) {
+    public User updateStudent(UUID id, StudentUpdateDTO data, @AuthenticationPrincipal User userLogged) {
+        if (!userLogged.getId().equals(id) && userLogged.getUserRole() != UserRole.ADMIN) {
+            throw new IllegalArgumentException("Usuário não tem permissão para atualizar este estudante");
+        }
+
         User user = userRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
 
-        if (!user.getUserRole().equals(UserRole.STUDENT)) {
-            throw new IllegalArgumentException("Usuário não é um estudante");
-        }
 
         if (data.username() != null && !data.username().equals(user.getUsername())) {
             if (userExists(data.username())) {
@@ -189,12 +190,9 @@ public class UserService {
         if (!userLogged.getId().equals(id) || userLogged.getUserRole() != UserRole.ADMIN) {
             throw new IllegalArgumentException("Usuário não tem permissão para atualizar este supervisor");
         }
+
         User user = userRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
-
-        if (!user.getUserRole().equals(UserRole.SUPERVISOR)) {
-            throw new IllegalArgumentException("Usuário não é um supervisor");
-        }
 
         if (data.username() != null && !data.username().equals(user.getUsername())) {
             if (userExists(data.username())) {
@@ -224,12 +222,9 @@ public class UserService {
         if (!userLogged.getId().equals(id) && userLogged.getUserRole() != UserRole.ADMIN) {
             throw new IllegalArgumentException("Usuário não tem permissão para atualizar este preceptor");
         }
+
         User user = userRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
-
-        if (!user.getUserRole().equals(UserRole.PRECEPTOR)) {
-            throw new IllegalArgumentException("Usuário não é um preceptor");
-        }
 
         if (data.username() != null && !data.username().equals(user.getUsername())) {
             if (userExists(data.username())) {
@@ -241,7 +236,6 @@ public class UserService {
         if (data.email() != null) {
             user.setEmail(data.email());
         }
-
 
         if (data.enabled() != null) {
             user.setEnabled(data.enabled());
@@ -255,12 +249,9 @@ public class UserService {
         if (!userLogged.getId().equals(id) && userLogged.getUserRole() != UserRole.ADMIN) {
             throw new IllegalArgumentException("Usuário não tem permissão para atualizar este admin");
         }
+
         User user = userRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
-
-        if (!user.getUserRole().equals(UserRole.ADMIN)) {
-            throw new IllegalArgumentException("Usuário não é um admin");
-        }
 
         if (data.username() != null && !data.username().equals(user.getUsername())) {
             if (userExists(data.username())) {
@@ -290,6 +281,7 @@ public class UserService {
         if (!userLogged.getId().equals(id) && userLogged.getUserRole() != UserRole.ADMIN) {
             throw new IllegalArgumentException("Usuário não tem permissão para deletar este usuário");
         }
+
         User user = userRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
 
