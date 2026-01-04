@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 
-@OpenAPIDefinition(info = @Info(title = "Swagger OpenApi", version = "1", description = "API desenvolvida para a versão beta do app marketmobile"))
+@OpenAPIDefinition(info = @Info(title = "Swagger OpenApi", version = "1", description = "API desenvolvida para a versão beta do Sistema de Gestão de Estágios - SIGE"))
 public class SigeApplication {
 
 	public static void main(String[] args) {

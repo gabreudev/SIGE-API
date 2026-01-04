@@ -94,4 +94,17 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Atualização falhou: " + e.getMessage());
         }
     }
+
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    @DeleteMapping("delete/{id}")
+    public ResponseEntity deleteUser(@PathVariable UUID id){
+        try{
+            userService.deleteUser(id);
+            return ResponseEntity.ok().body("Usuário deletado com sucesso");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao deletar usuário: " + e.getMessage());
+        }
+    }
 }

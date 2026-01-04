@@ -168,7 +168,6 @@ public class UserService {
             user.setEmail(data.email());
         }
 
-
         if (data.registration() != null) {
             user.setRegistration(data.registration());
         }
@@ -275,5 +274,13 @@ public class UserService {
 
         log.info("Atualizando admin: {}", user.getUsername());
         return userRepository.save(user);
+    }
+
+    public void deleteUser(UUID id) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+
+        log.info("Deletando usuário: {} ({})", user.getUsername(), user.getUserRole());
+        userRepository.delete(user);
     }
 }
