@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -45,9 +46,9 @@ public class UserController {
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PutMapping("student/update/{id}")
-    public ResponseEntity updateStudent(@PathVariable UUID id, @RequestBody @Valid StudentUpdateDTO data){
+    public ResponseEntity updateStudent(@PathVariable UUID id, @RequestBody @Valid StudentUpdateDTO data, @AuthenticationPrincipal User user){
         try{
-            User updatedUser = userService.updateStudent(id, data);
+            User updatedUser = userService.updateStudent(id, data, user);
             return ResponseEntity.ok(updatedUser);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -58,9 +59,9 @@ public class UserController {
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PutMapping("admin/update/{id}")
-    public ResponseEntity updateAdmin(@PathVariable UUID id, @RequestBody @Valid AdminUpdateDTO data){
+    public ResponseEntity updateAdmin(@PathVariable UUID id, @RequestBody @Valid AdminUpdateDTO data, @AuthenticationPrincipal User user){
         try{
-            User updatedUser = userService.updateAdmin(id, data);
+            User updatedUser = userService.updateAdmin(id, data, user);
             return ResponseEntity.ok(updatedUser);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -71,9 +72,9 @@ public class UserController {
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PutMapping("supervisor/update/{id}")
-    public ResponseEntity updateSupervisor(@PathVariable UUID id, @RequestBody @Valid SupervisorUpdateDTO data){
+    public ResponseEntity updateSupervisor(@PathVariable UUID id, @RequestBody @Valid SupervisorUpdateDTO data, @AuthenticationPrincipal User user){
         try{
-            User updatedUser = userService.updateSupervisor(id, data);
+            User updatedUser = userService.updateSupervisor(id, data, user);
             return ResponseEntity.ok(updatedUser);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -84,9 +85,9 @@ public class UserController {
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PutMapping("preceptor/update/{id}")
-    public ResponseEntity updatePreceptor(@PathVariable UUID id, @RequestBody @Valid PreceptorUpdateDTO data){
+    public ResponseEntity updatePreceptor(@PathVariable UUID id, @RequestBody @Valid PreceptorUpdateDTO data, @AuthenticationPrincipal User user){
         try{
-            User updatedUser = userService.updatePreceptor(id, data);
+            User updatedUser = userService.updatePreceptor(id, data, user);
             return ResponseEntity.ok(updatedUser);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -97,9 +98,9 @@ public class UserController {
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @DeleteMapping("delete/{id}")
-    public ResponseEntity deleteUser(@PathVariable UUID id){
+    public ResponseEntity deleteUser(@PathVariable UUID id, @AuthenticationPrincipal User user){
         try{
-            userService.deleteUser(id);
+            userService.deleteUser(id, user);
             return ResponseEntity.ok().body("Usuário deletado com sucesso");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

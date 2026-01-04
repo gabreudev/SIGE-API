@@ -10,6 +10,7 @@ import com.gabreudev.sige.entities.user.dto.SupervisorUpdateDTO;
 import com.gabreudev.sige.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -184,7 +185,10 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public User updateSupervisor(UUID id, SupervisorUpdateDTO data) {
+    public User updateSupervisor(UUID id, SupervisorUpdateDTO data, User userLogged) {
+        if (!userLogged.getId().equals(id) || userLogged.getUserRole() != UserRole.ADMIN) {
+            throw new IllegalArgumentException("Usuário não tem permissão para atualizar este supervisor");
+        }
         User user = userRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
 
@@ -216,7 +220,10 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public User updatePreceptor(UUID id, PreceptorUpdateDTO data) {
+    public User updatePreceptor(UUID id, PreceptorUpdateDTO data, @AuthenticationPrincipal User userLogged) {
+        if (!userLogged.getId().equals(id) && userLogged.getUserRole() != UserRole.ADMIN) {
+            throw new IllegalArgumentException("Usuário não tem permissão para atualizar este preceptor");
+        }
         User user = userRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
 
@@ -244,7 +251,10 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public User updateAdmin(UUID id, AdminUpdateDTO data) {
+    public User updateAdmin(UUID id, AdminUpdateDTO data, User userLogged) {
+        if (!userLogged.getId().equals(id) && userLogged.getUserRole() != UserRole.ADMIN) {
+            throw new IllegalArgumentException("Usuário não tem permissão para atualizar este admin");
+        }
         User user = userRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
 
@@ -276,7 +286,10 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public void deleteUser(UUID id) {
+    public void deleteUser(UUID id, User userLogged) {
+        if (!userLogged.getId().equals(id) && userLogged.getUserRole() != UserRole.ADMIN) {
+            throw new IllegalArgumentException("Usuário não tem permissão para deletar este usuário");
+        }
         User user = userRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
 
