@@ -1,5 +1,9 @@
 package com.gabreudev.sige.entities.user;
 
+import com.gabreudev.sige.entities.user.dto.AdminUpdateDTO;
+import com.gabreudev.sige.entities.user.dto.PreceptorUpdateDTO;
+import com.gabreudev.sige.entities.user.dto.StudentUpdateDTO;
+import com.gabreudev.sige.entities.user.dto.SupervisorUpdateDTO;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,15 +27,17 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private String registration; // student as matricula and supervisor as siape
+    private String name;
 
+    private String registration; // student as matricula | supervisor as siape | preceptor as corem
+
+    @Column(unique = true)
     private String username;
 
     private String password;
 
+    @Column(unique = true)
     private String email;
-
-    private String coren;
 
     @Enumerated(EnumType.STRING)
     private InternshipRole internshipRole;
@@ -41,26 +47,64 @@ public class User implements UserDetails {
 
     private Boolean enabled;
 
-
-
-    public User(String username, String email, String password, UserRole userRole, Boolean enabled, String coren, String registration) {
-        this.username = username;
-        this.email = email;
-        this.password = password;
+    public User(UserRegisterDTO data, String encryptedPassword, UserRole userRole) {
+        this.username = data.username();
+        this.name = data.name();
+        this.email = data.email();
+        this.password = encryptedPassword;
         this.userRole = userRole;
-        this.coren = coren;
-        this.registration = registration;
-        this.enabled = enabled != null ? enabled : true;
+        this.registration = data.registration();
+        this.internshipRole = data.internshipRole();
+        this.enabled = true;
     }
 
-    public User(UserRegisterDTO data, String passwordBcripted) {
-        this.email = data.email();
-        this.password = passwordBcripted;
-        this.userRole = data.userRole();
-        this.internshipRole = data.internshipRole();
-        this.username = data.username();
-        this.registration = data.registration();
-        this.enabled = true;
+    // Construtores de atualização para cada tipo de usuário
+    public User(User existing, StudentUpdateDTO dto) {
+        this.id = existing.id;
+        this.username = dto.username() != null ? dto.username() : existing.username;
+        this.name = dto.name() != null ? dto.name() : existing.name;
+        this.email = dto.email() != null ? dto.email() : existing.email;
+        this.registration = dto.registration() != null ? dto.registration() : existing.registration;
+        this.internshipRole = dto.internshipRole() != null ? dto.internshipRole() : existing.internshipRole;
+        this.enabled = dto.enabled() != null ? dto.enabled() : existing.enabled;
+        this.password = existing.password;
+        this.userRole = existing.userRole;
+    }
+
+    public User(User existing, SupervisorUpdateDTO dto) {
+        this.id = existing.id;
+        this.username = dto.username() != null ? dto.username() : existing.username;
+        this.name = dto.name() != null ? dto.name() : existing.name;
+        this.email = dto.email() != null ? dto.email() : existing.email;
+        this.registration = dto.registration() != null ? dto.registration() : existing.registration;
+        this.enabled = dto.enabled() != null ? dto.enabled() : existing.enabled;
+        this.password = existing.password;
+        this.userRole = existing.userRole;
+        this.internshipRole = existing.internshipRole;
+    }
+
+    public User(User existing, PreceptorUpdateDTO dto) {
+        this.id = existing.id;
+        this.username = dto.username() != null ? dto.username() : existing.username;
+        this.name = dto.name() != null ? dto.name() : existing.name;
+        this.email = dto.email() != null ? dto.email() : existing.email;
+        this.registration = dto.registration() != null ? dto.registration() : existing.registration;
+        this.enabled = dto.enabled() != null ? dto.enabled() : existing.enabled;
+        this.password = existing.password;
+        this.userRole = existing.userRole;
+        this.internshipRole = existing.internshipRole;
+    }
+
+    public User(User existing, AdminUpdateDTO dto, String encryptedPassword) {
+        this.id = existing.id;
+        this.username = dto.username() != null ? dto.username() : existing.username;
+        this.name = dto.name() != null ? dto.name() : existing.name;
+        this.email = dto.email() != null ? dto.email() : existing.email;
+        this.password = (dto.password() != null && !dto.password().isEmpty()) ? encryptedPassword : existing.password;
+        this.enabled = dto.enabled() != null ? dto.enabled() : existing.enabled;
+        this.userRole = existing.userRole;
+        this.registration = existing.registration;
+        this.internshipRole = existing.internshipRole;
     }
 
     @Override

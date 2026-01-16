@@ -10,7 +10,6 @@ import com.gabreudev.sige.entities.user.dto.SupervisorUpdateDTO;
 import com.gabreudev.sige.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -40,156 +39,75 @@ public class UserService {
         return userRepository.findByUsername(username) != null;
     }
 
-    public User registerStudent(UserRegisterDTO data) {
+    private User registerUser(UserRegisterDTO data, UserRole userRole, String password, boolean generatePassword) {
         if (userExists(data.username())) {
             throw new IllegalArgumentException("Usuário já existe");
         }
 
-        String randomPassword = generateRandomPassword();
-        String encryptedPassword = passwordEncoder.encode(randomPassword);
+        String actualPassword = generatePassword ? generateRandomPassword() : password;
+        String encryptedPassword = passwordEncoder.encode(actualPassword);
 
-        User newUser = new User(
-            data.username(),
-            data.email(),
-            encryptedPassword,
-            UserRole.STUDENT,
-            true,
-            data.coren(),
-            data.registration()
-        );
-        newUser.setInternshipRole(data.internshipRole());
+        User newUser = new User(data, encryptedPassword, userRole);
 
-        log.info("Registrando estudante: {} com senha gerada: {}", data.username(), randomPassword);
+        log.info("Registrando {}: {}{}", userRole.name().toLowerCase(),
+                data.username(),
+                generatePassword ? " com senha gerada: " + actualPassword : "");
+
         User savedUser = userRepository.save(newUser);
 
-        // Enviar email com a senha
-        //mailService.sendPasswordEmail(data.email(), data.username(), randomPassword, "Estudante");
+        // Enviar email com a senha (se senha foi gerada)
+        if (generatePassword) {
+            //mailService.sendPasswordEmail(data.email(), data.username(), actualPassword, userRole.name());
+        }
 
         return savedUser;
+    }
+
+    public User registerStudent(UserRegisterDTO data) {
+        return registerUser(data, UserRole.STUDENT, null, true);
     }
 
     public User registerSupervisor(UserRegisterDTO data) {
-        if (userExists(data.username())) {
-            throw new IllegalArgumentException("Usuário já existe");
-        }
-
-        String randomPassword = generateRandomPassword();
-        String encryptedPassword = passwordEncoder.encode(randomPassword);
-
-        User newUser = new User(
-            data.username(),
-            data.email(),
-            encryptedPassword,
-            UserRole.SUPERVISOR,
-            true,
-            data.coren(),
-            data.registration()
-        );
-        newUser.setInternshipRole(data.internshipRole());
-
-        log.info("Registrando supervisor: {} com senha gerada: {}", data.username(), randomPassword);
-        User savedUser = userRepository.save(newUser);
-
-        // Enviar email com a senha
-        //mailService.sendPasswordEmail(data.email(), data.username(), randomPassword, "Supervisor");
-
-        return savedUser;
+        return registerUser(data, UserRole.SUPERVISOR, null, true);
     }
 
     public User registerPreceptor(UserRegisterDTO data) {
-        if (userExists(data.username())) {
-            throw new IllegalArgumentException("Usuário já existe");
-        }
-
-        String randomPassword = generateRandomPassword();
-        String encryptedPassword = passwordEncoder.encode(randomPassword);
-
-        User newUser = new User(
-            data.username(),
-            data.email(),
-            encryptedPassword,
-            UserRole.PRECEPTOR,
-            true,
-            data.coren(),
-            data.registration()
-        );
-        newUser.setInternshipRole(data.internshipRole());
-
-        log.info("Registrando preceptor: {} com senha gerada: {}", data.username(), randomPassword);
-        User savedUser = userRepository.save(newUser);
-
-        // Enviar email com a senha
-        //mailService.sendPasswordEmail(data.email(), data.username(), randomPassword, "Preceptor");
-
-        return savedUser;
+        return registerUser(data, UserRole.PRECEPTOR, null, true);
     }
 
     public User registerAdmin(UserRegisterDTO data) {
-        if (userExists(data.username())) {
-            throw new IllegalArgumentException("Usuário já existe");
-        }
-
-        String encryptedPassword = passwordEncoder.encode(data.password());
-
-        User newUser = new User(
-            data.username(),
-            data.email(),
-            encryptedPassword,
-            UserRole.ADMIN,
-            true,
-            data.coren(),
-            data.registration()
-        );
-        newUser.setInternshipRole(data.internshipRole());
-
-        log.info("Registrando admin: {}", data.username());
-        return userRepository.save(newUser);
+        return registerUser(data, UserRole.ADMIN, data.password(), false);
     }
 
     public List<User> findUsersByRole(UserRole userRole) {
         return userRepository.findByUserRole(userRole);
     }
 
-    public User updateStudent(UUID id, StudentUpdateDTO data, @AuthenticationPrincipal User userLogged) {
+    private void checkUpdatePermission(UUID id, User userLogged) {
         if (!userLogged.getId().equals(id) && userLogged.getUserRole() != UserRole.ADMIN) {
-            throw new IllegalArgumentException("Usuário não tem permissão para atualizar este estudante");
+            throw new IllegalArgumentException("Usuário não tem permissão para atualizar este usuário");
         }
+    }
+
+    public User updateStudent(UUID id, StudentUpdateDTO data, User userLogged) {
+        checkUpdatePermission(id, userLogged);
 
         User user = userRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
-
 
         if (data.username() != null && !data.username().equals(user.getUsername())) {
             if (userExists(data.username())) {
                 throw new IllegalArgumentException("Username já existe");
             }
-            user.setUsername(data.username());
         }
 
-        if (data.email() != null) {
-            user.setEmail(data.email());
-        }
-
-        if (data.registration() != null) {
-            user.setRegistration(data.registration());
-        }
-
-        if (data.internshipRole() != null) {
-            user.setInternshipRole(data.internshipRole());
-        }
-
-        if (data.enabled() != null) {
-            user.setEnabled(data.enabled());
-        }
-
-        log.info("Atualizando estudante: {}", user.getUsername());
-        return userRepository.save(user);
+        User updatedUser = new User(user, data);
+        log.info("Atualizando estudante: {}", updatedUser.getUsername());
+        return userRepository.save(updatedUser);
     }
 
     public User updateSupervisor(UUID id, SupervisorUpdateDTO data, User userLogged) {
-        if (!userLogged.getId().equals(id) || userLogged.getUserRole() != UserRole.ADMIN) {
-            throw new IllegalArgumentException("Usuário não tem permissão para atualizar este supervisor");
-        }
+        checkUpdatePermission(id, userLogged);
 
         User user = userRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
@@ -198,30 +116,15 @@ public class UserService {
             if (userExists(data.username())) {
                 throw new IllegalArgumentException("Username já existe");
             }
-            user.setUsername(data.username());
         }
 
-        if (data.email() != null) {
-            user.setEmail(data.email());
-        }
-
-        if (data.coren() != null) {
-            user.setCoren(data.coren());
-        }
-
-
-        if (data.enabled() != null) {
-            user.setEnabled(data.enabled());
-        }
-
-        log.info("Atualizando supervisor: {}", user.getUsername());
-        return userRepository.save(user);
+        User updatedUser = new User(user, data);
+        log.info("Atualizando supervisor: {}", updatedUser.getUsername());
+        return userRepository.save(updatedUser);
     }
 
-    public User updatePreceptor(UUID id, PreceptorUpdateDTO data, @AuthenticationPrincipal User userLogged) {
-        if (!userLogged.getId().equals(id) && userLogged.getUserRole() != UserRole.ADMIN) {
-            throw new IllegalArgumentException("Usuário não tem permissão para atualizar este preceptor");
-        }
+    public User updatePreceptor(UUID id, PreceptorUpdateDTO data, User userLogged) {
+        checkUpdatePermission(id, userLogged);
 
         User user = userRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
@@ -230,25 +133,15 @@ public class UserService {
             if (userExists(data.username())) {
                 throw new IllegalArgumentException("Username já existe");
             }
-            user.setUsername(data.username());
         }
 
-        if (data.email() != null) {
-            user.setEmail(data.email());
-        }
-
-        if (data.enabled() != null) {
-            user.setEnabled(data.enabled());
-        }
-
-        log.info("Atualizando preceptor: {}", user.getUsername());
-        return userRepository.save(user);
+        User updatedUser = new User(user, data);
+        log.info("Atualizando preceptor: {}", updatedUser.getUsername());
+        return userRepository.save(updatedUser);
     }
 
     public User updateAdmin(UUID id, AdminUpdateDTO data, User userLogged) {
-        if (!userLogged.getId().equals(id) && userLogged.getUserRole() != UserRole.ADMIN) {
-            throw new IllegalArgumentException("Usuário não tem permissão para atualizar este admin");
-        }
+        checkUpdatePermission(id, userLogged);
 
         User user = userRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
@@ -257,30 +150,20 @@ public class UserService {
             if (userExists(data.username())) {
                 throw new IllegalArgumentException("Username já existe");
             }
-            user.setUsername(data.username());
         }
 
-        if (data.email() != null) {
-            user.setEmail(data.email());
-        }
-
+        String encryptedPassword = null;
         if (data.password() != null && !data.password().isEmpty()) {
-            String encryptedPassword = passwordEncoder.encode(data.password());
-            user.setPassword(encryptedPassword);
+            encryptedPassword = passwordEncoder.encode(data.password());
         }
 
-        if (data.enabled() != null) {
-            user.setEnabled(data.enabled());
-        }
-
-        log.info("Atualizando admin: {}", user.getUsername());
-        return userRepository.save(user);
+        User updatedUser = new User(user, data, encryptedPassword);
+        log.info("Atualizando admin: {}", updatedUser.getUsername());
+        return userRepository.save(updatedUser);
     }
 
     public void deleteUser(UUID id, User userLogged) {
-        if (!userLogged.getId().equals(id) && userLogged.getUserRole() != UserRole.ADMIN) {
-            throw new IllegalArgumentException("Usuário não tem permissão para deletar este usuário");
-        }
+        checkUpdatePermission(id, userLogged);
 
         User user = userRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));

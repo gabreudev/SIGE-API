@@ -3,10 +3,10 @@ package com.gabreudev.sige.entities.user.dto;
 import com.gabreudev.sige.entities.user.InternshipRole;
 
 public record StudentUpdateDTO(
-
-        Boolean enabled,
-        InternshipRole internshipRole,
-        String registration,
+        String username,
+        String name,
         String email,
-        String username
-        ) {}
+        String registration,
+        InternshipRole internshipRole,
+        Boolean enabled
+) {}
