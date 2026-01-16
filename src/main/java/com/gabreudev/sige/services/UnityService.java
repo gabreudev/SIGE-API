@@ -1,6 +1,6 @@
 package com.gabreudev.sige.services;
 
-import com.gabreudev.sige.entities.unity.dto.Unity;
+import com.gabreudev.sige.entities.unity.Unity;
 import com.gabreudev.sige.entities.unity.dto.UnityCreateDTO;
 import com.gabreudev.sige.entities.unity.dto.UnityUpdateDTO;
 import com.gabreudev.sige.entities.user.User;

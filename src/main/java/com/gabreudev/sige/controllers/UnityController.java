@@ -1,7 +1,11 @@
 package com.gabreudev.sige.controllers;
 
+import com.gabreudev.sige.entities.unity.Unity;
 import com.gabreudev.sige.entities.unity.dto.*;
+import com.gabreudev.sige.entities.unity.dto.*;
+import com.gabreudev.sige.infra.SecurityConfigurations;
 import com.gabreudev.sige.services.UnityService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +17,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/unities")
+@SecurityRequirement(name = SecurityConfigurations.SECURITY)
 public class UnityController {
 
     @Autowired

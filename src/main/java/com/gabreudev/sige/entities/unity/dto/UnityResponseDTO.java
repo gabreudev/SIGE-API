@@ -1,5 +1,9 @@
 package com.gabreudev.sige.entities.unity.dto;
 
+package com.gabreudev.sige.entities.unity.dto;
+
+import com.gabreudev.sige.entities.unity.Unity;
+
 import java.util.Map;
 import java.util.UUID;
 

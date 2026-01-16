@@ -1,4 +1,4 @@
-package com.gabreudev.sige.entities.unity.dto;
+package com.gabreudev.sige.entities.unity;
 
 import com.gabreudev.sige.entities.user.User;
 import jakarta.persistence.*;
