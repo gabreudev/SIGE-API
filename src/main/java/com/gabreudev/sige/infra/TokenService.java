@@ -23,7 +23,7 @@ public class TokenService {
             Algorithm algorithm = Algorithm.HMAC256(secret);
             String token = JWT.create()
                     .withIssuer("sige-api")
-                    .withSubject(user.getEmail())
+                    .withSubject(user.getId().toString())
                     .withClaim("username", user.getUsername())
                     .withClaim("role", user.getUserRole().name())
                     .withExpiresAt(genExpirationDate())

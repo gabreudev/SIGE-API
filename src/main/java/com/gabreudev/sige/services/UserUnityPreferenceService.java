@@ -2,6 +2,8 @@ package com.gabreudev.sige.services;
 
 import com.gabreudev.sige.entities.unity.Unity;
 import com.gabreudev.sige.entities.user.User;
+import com.gabreudev.sige.entities.user.UserRole;
+import com.gabreudev.sige.entities.user.dto.UserPreferredUnitiesResponseDTO;
 import com.gabreudev.sige.repositories.UnityRepository;
 import com.gabreudev.sige.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,5 +81,42 @@ public class UserUnityPreferenceService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         return unityRepository.findAllById(user.getPreferredUnityIds());
+    }
+
+    private void checkPermission(UUID userId, User currentUser) {
+        if (!currentUser.getId().equals(userId) && !currentUser.getUserRole().equals(UserRole.ADMIN)) {
+            throw new RuntimeException("Você não tem permissão para modificar essas preferências");
+        }
+    }
+
+    @Transactional
+    public UserPreferredUnitiesResponseDTO setPreferredUnitiesWithResponse(UUID userId, List<UUID> unityIds, User currentUser) {
+        checkPermission(userId, currentUser);
+        User updatedUser = setPreferredUnities(userId, unityIds);
+        List<Unity> unities = getPreferredUnities(userId);
+        return UserPreferredUnitiesResponseDTO.fromUser(updatedUser, unities);
+    }
+
+    @Transactional
+    public UserPreferredUnitiesResponseDTO addPreferredUnityWithResponse(UUID userId, UUID unityId, User currentUser) {
+        checkPermission(userId, currentUser);
+        User updatedUser = addPreferredUnity(userId, unityId);
+        List<Unity> unities = getPreferredUnities(userId);
+        return UserPreferredUnitiesResponseDTO.fromUser(updatedUser, unities);
+    }
+
+    @Transactional
+    public UserPreferredUnitiesResponseDTO removePreferredUnityWithResponse(UUID userId, UUID unityId, User currentUser) {
+        checkPermission(userId, currentUser);
+        User updatedUser = removePreferredUnity(userId, unityId);
+        List<Unity> unities = getPreferredUnities(userId);
+        return UserPreferredUnitiesResponseDTO.fromUser(updatedUser, unities);
+    }
+
+    public UserPreferredUnitiesResponseDTO getPreferredUnitiesWithResponse(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        List<Unity> unities = getPreferredUnities(userId);
+        return UserPreferredUnitiesResponseDTO.fromUser(user, unities);
     }
 }

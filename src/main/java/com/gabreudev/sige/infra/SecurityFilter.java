@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @Component
@@ -33,11 +34,20 @@ public class SecurityFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         var token = this.recoverToken(request);
         if(token != null){
-            var login = tokenService.validateToken(token);
-            User user = userRepository.findByUsername(login);
+            var userId = tokenService.validateToken(token);
+            if(userId != null && !userId.isEmpty()){
+                try {
+                    UUID id = UUID.fromString(userId);
+                    User user = userRepository.findById(id).orElse(null);
 
-            var authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                    if(user != null){
+                        var authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
+                } catch (IllegalArgumentException e) {
+                    // Invalid UUID format, skip authentication
+                }
+            }
         }
         filterChain.doFilter(request, response);
     }

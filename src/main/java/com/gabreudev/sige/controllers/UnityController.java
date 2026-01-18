@@ -25,14 +25,12 @@ public class UnityController {
     private UnityService unityService;
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UnityResponseDTO> createUnity(@RequestBody UnityCreateDTO dto) {
         Unity unity = unityService.createUnity(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(new UnityResponseDTO(unity));
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR', 'PRECEPTOR', 'STUDENT')")
     public ResponseEntity<List<UnityResponseDTO>> getAllUnities() {
         List<Unity> unities = unityService.findAll();
         List<UnityResponseDTO> response = unities.stream()
@@ -42,7 +40,6 @@ public class UnityController {
     }
 
     @GetMapping("/role/{unityRole}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR', 'PRECEPTOR', 'STUDENT')")
     public ResponseEntity<List<UnityResponseDTO>> getUnitiesByRole(@PathVariable UnityRole unityRole) {
         List<Unity> unities = unityService.findByUnityRole(unityRole);
         List<UnityResponseDTO> response = unities.stream()
@@ -52,21 +49,18 @@ public class UnityController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR', 'PRECEPTOR', 'STUDENT')")
     public ResponseEntity<UnityResponseDTO> getUnityById(@PathVariable UUID id) {
         Unity unity = unityService.findById(id);
         return ResponseEntity.ok(new UnityResponseDTO(unity));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UnityResponseDTO> updateUnity(@PathVariable UUID id, @RequestBody UnityUpdateDTO dto) {
         Unity unity = unityService.updateUnity(id, dto);
         return ResponseEntity.ok(new UnityResponseDTO(unity));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteUnity(@PathVariable UUID id) {
         unityService.deleteUnity(id);
         return ResponseEntity.noContent().build();

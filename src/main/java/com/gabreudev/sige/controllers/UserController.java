@@ -1,6 +1,5 @@
 package com.gabreudev.sige.controllers;
 
-import com.gabreudev.sige.entities.unity.Unity;
 import com.gabreudev.sige.entities.user.User;
 import com.gabreudev.sige.entities.user.UserRole;
 import com.gabreudev.sige.entities.user.dto.*;
@@ -17,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -119,14 +117,8 @@ public class UserController {
             @RequestBody @Valid UserPreferredUnitiesDTO data,
             @AuthenticationPrincipal User user){
         try{
-            // Verifica se o usuário pode modificar essas preferências
-            if (!user.getId().equals(userId) && !user.getUserRole().equals(UserRole.ADMIN)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Você não tem permissão para modificar essas preferências");
-            }
-
-            User updatedUser = preferenceService.setPreferredUnities(userId, data.unityIds());
-            List<Unity> unities = preferenceService.getPreferredUnities(userId);
-            return ResponseEntity.ok(UserPreferredUnitiesResponseDTO.fromUser(updatedUser, unities));
+            UserPreferredUnitiesResponseDTO response = preferenceService.setPreferredUnitiesWithResponse(userId, data.unityIds(), user);
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
@@ -141,13 +133,8 @@ public class UserController {
             @PathVariable UUID unityId,
             @AuthenticationPrincipal User user){
         try{
-            if (!user.getId().equals(userId) && !user.getUserRole().equals(UserRole.ADMIN)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Você não tem permissão para modificar essas preferências");
-            }
-
-            User updatedUser = preferenceService.addPreferredUnity(userId, unityId);
-            List<Unity> unities = preferenceService.getPreferredUnities(userId);
-            return ResponseEntity.ok(UserPreferredUnitiesResponseDTO.fromUser(updatedUser, unities));
+            UserPreferredUnitiesResponseDTO response = preferenceService.addPreferredUnityWithResponse(userId, unityId, user);
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
@@ -162,14 +149,8 @@ public class UserController {
             @PathVariable UUID unityId,
             @AuthenticationPrincipal User user){
         try{
-            // Verifica se o usuário pode modificar essas preferências
-            if (!user.getId().equals(userId) && !user.getUserRole().equals(UserRole.ADMIN)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Você não tem permissão para modificar essas preferências");
-            }
-
-            User updatedUser = preferenceService.removePreferredUnity(userId, unityId);
-            List<Unity> unities = preferenceService.getPreferredUnities(userId);
-            return ResponseEntity.ok(UserPreferredUnitiesResponseDTO.fromUser(updatedUser, unities));
+            UserPreferredUnitiesResponseDTO response = preferenceService.removePreferredUnityWithResponse(userId, unityId, user);
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
@@ -181,13 +162,8 @@ public class UserController {
     @GetMapping("{userId}/preferred-unities")
     public ResponseEntity getPreferredUnities(@PathVariable UUID userId){
         try{
-            User user = userService.findUsersByRole(null).stream()
-                    .filter(u -> u.getId().equals(userId))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-
-            List<Unity> unities = preferenceService.getPreferredUnities(userId);
-            return ResponseEntity.ok(UserPreferredUnitiesResponseDTO.fromUser(user, unities));
+            UserPreferredUnitiesResponseDTO response = preferenceService.getPreferredUnitiesWithResponse(userId);
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
