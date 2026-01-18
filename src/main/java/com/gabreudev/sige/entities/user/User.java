@@ -38,6 +38,8 @@ public class User implements UserDetails {
 
     private String password;
 
+    private Boolean male;
+
     @Column(unique = true)
     private String email;
 
@@ -62,6 +64,7 @@ public class User implements UserDetails {
         this.userRole = userRole;
         this.registration = data.registration();
         this.internshipRole = data.internshipRole();
+        this.male = data.male();
         this.enabled = true;
     }
 
@@ -74,6 +77,7 @@ public class User implements UserDetails {
         this.registration = dto.registration() != null ? dto.registration() : existing.registration;
         this.internshipRole = dto.internshipRole() != null ? dto.internshipRole() : existing.internshipRole;
         this.enabled = dto.enabled() != null ? dto.enabled() : existing.enabled;
+        this.male = dto.male() != null ? dto.male() : existing.male;
         this.password = existing.password;
         this.userRole = existing.userRole;
     }
@@ -85,6 +89,7 @@ public class User implements UserDetails {
         this.email = dto.email() != null ? dto.email() : existing.email;
         this.registration = dto.registration() != null ? dto.registration() : existing.registration;
         this.enabled = dto.enabled() != null ? dto.enabled() : existing.enabled;
+        this.male = dto.male() != null ? dto.male() : existing.male;
         this.password = existing.password;
         this.userRole = existing.userRole;
         this.internshipRole = existing.internshipRole;
@@ -97,6 +102,7 @@ public class User implements UserDetails {
         this.email = dto.email() != null ? dto.email() : existing.email;
         this.registration = dto.registration() != null ? dto.registration() : existing.registration;
         this.enabled = dto.enabled() != null ? dto.enabled() : existing.enabled;
+        this.male = dto.male() != null ? dto.male() : existing.male;
         this.password = existing.password;
         this.userRole = existing.userRole;
         this.internshipRole = existing.internshipRole;
@@ -109,6 +115,7 @@ public class User implements UserDetails {
         this.email = dto.email() != null ? dto.email() : existing.email;
         this.password = (dto.password() != null && !dto.password().isEmpty()) ? encryptedPassword : existing.password;
         this.enabled = dto.enabled() != null ? dto.enabled() : existing.enabled;
+        this.male = dto.male() != null ? dto.male() : existing.male;
         this.userRole = existing.userRole;
         this.registration = existing.registration;
         this.internshipRole = existing.internshipRole;

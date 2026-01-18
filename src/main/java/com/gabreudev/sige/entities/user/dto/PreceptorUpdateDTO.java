@@ -5,6 +5,7 @@ public record PreceptorUpdateDTO(
         String name,
         String email,
         String registration,
-        Boolean enabled
+        Boolean enabled,
+        Boolean male
 ) {}
 

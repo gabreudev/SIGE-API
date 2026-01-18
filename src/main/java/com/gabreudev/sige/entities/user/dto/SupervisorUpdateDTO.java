@@ -5,6 +5,7 @@ public record SupervisorUpdateDTO(
         String name,
         String email,
         String registration,
-        Boolean enabled
+        Boolean enabled,
+        Boolean male
 ) {}
 

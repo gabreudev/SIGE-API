@@ -1,6 +1,7 @@
 package com.gabreudev.sige.services;
 
 import com.gabreudev.sige.entities.unity.Unity;
+import com.gabreudev.sige.entities.unity.UnityRole;
 import com.gabreudev.sige.entities.unity.dto.UnityCreateDTO;
 import com.gabreudev.sige.entities.unity.dto.UnityUpdateDTO;
 import com.gabreudev.sige.entities.user.User;
@@ -31,6 +32,7 @@ public class UnityService {
         Unity unity = new Unity(
                 dto.name(),
                 dto.address(),
+                dto.unityRole(),
                 preceptor,
                 dto.availability()
         );
@@ -52,6 +54,7 @@ public class UnityService {
                 existing,
                 dto.name(),
                 dto.address(),
+                dto.unityRole(),
                 preceptor,
                 dto.availability()
         );
@@ -73,6 +76,10 @@ public class UnityService {
 
     public List<Unity> findAll() {
         return unityRepository.findAll();
+    }
+
+    public List<Unity> findByUnityRole(UnityRole unityRole) {
+        return unityRepository.findByUnityRole(unityRole);
     }
 }
 

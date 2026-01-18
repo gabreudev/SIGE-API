@@ -8,5 +8,6 @@ public record StudentUpdateDTO(
         String email,
         String registration,
         InternshipRole internshipRole,
-        Boolean enabled
+        Boolean enabled,
+        Boolean male
 ) {}

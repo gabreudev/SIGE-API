@@ -1,6 +1,7 @@
 package com.gabreudev.sige.controllers;
 
 import com.gabreudev.sige.entities.unity.Unity;
+import com.gabreudev.sige.entities.unity.UnityRole;
 import com.gabreudev.sige.entities.unity.dto.*;
 import com.gabreudev.sige.entities.unity.dto.*;
 import com.gabreudev.sige.infra.SecurityConfigurations;
@@ -34,6 +35,16 @@ public class UnityController {
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR', 'PRECEPTOR', 'STUDENT')")
     public ResponseEntity<List<UnityResponseDTO>> getAllUnities() {
         List<Unity> unities = unityService.findAll();
+        List<UnityResponseDTO> response = unities.stream()
+                .map(UnityResponseDTO::new)
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/role/{unityRole}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR', 'PRECEPTOR', 'STUDENT')")
+    public ResponseEntity<List<UnityResponseDTO>> getUnitiesByRole(@PathVariable UnityRole unityRole) {
+        List<Unity> unities = unityService.findByUnityRole(unityRole);
         List<UnityResponseDTO> response = unities.stream()
                 .map(UnityResponseDTO::new)
                 .toList();

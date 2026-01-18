@@ -7,5 +7,6 @@ public record UserRegisterDTO(
         String password,
         String registration,
         UserRole userRole,
-        InternshipRole internshipRole
+        InternshipRole internshipRole,
+        Boolean male
 ) {}

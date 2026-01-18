@@ -5,6 +5,7 @@ public record AdminUpdateDTO(
         String name,
         String email,
         String password,
-        Boolean enabled
+        Boolean enabled,
+        Boolean male
 ) {}
 

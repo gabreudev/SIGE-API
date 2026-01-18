@@ -18,6 +18,7 @@ public record UserResponseDTO(
         UserRole userRole,
         InternshipRole internshipRole,
         Boolean enabled,
+        Boolean male,
         List<PreferredUnityInfo> preferredUnities
 ) {
     public record PreferredUnityInfo(
@@ -45,6 +46,7 @@ public record UserResponseDTO(
                 user.getUserRole(),
                 user.getInternshipRole(),
                 user.getEnabled(),
+                user.getMale(),
                 unityInfos
         );
     }

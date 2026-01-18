@@ -1,12 +1,11 @@
 package com.gabreudev.sige.services;
 
+import com.gabreudev.sige.entities.unity.Unity;
 import com.gabreudev.sige.entities.user.User;
 import com.gabreudev.sige.entities.user.UserRegisterDTO;
 import com.gabreudev.sige.entities.user.UserRole;
-import com.gabreudev.sige.entities.user.dto.AdminUpdateDTO;
-import com.gabreudev.sige.entities.user.dto.PreceptorUpdateDTO;
-import com.gabreudev.sige.entities.user.dto.StudentUpdateDTO;
-import com.gabreudev.sige.entities.user.dto.SupervisorUpdateDTO;
+import com.gabreudev.sige.entities.user.dto.*;
+import com.gabreudev.sige.repositories.UnityRepository;
 import com.gabreudev.sige.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +23,8 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UnityRepository unityRepository;
+
     private final PasswordEncoder passwordEncoder;
     private final MailService mailService;
 
