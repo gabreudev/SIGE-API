@@ -83,6 +83,21 @@ public class UserService {
         return userRepository.findByUserRole(userRole);
     }
 
+    public List<UserResponseDTO> findUsersByRoleWithPreferences(UserRole userRole) {
+        List<User> users = userRepository.findByUserRole(userRole);
+
+        return users.stream()
+                .map(user -> {
+                    // Só busca unidades preferidas se for STUDENT
+                    List<Unity> preferredUnities = List.of();
+                    if (userRole == UserRole.STUDENT) {
+                        preferredUnities = unityRepository.findAllById(user.getPreferredUnityIds());
+                    }
+                    return UserResponseDTO.fromUser(user, preferredUnities);
+                })
+                .collect(Collectors.toList());
+    }
+
     private void checkUpdatePermission(UUID id, User userLogged) {
         if (!userLogged.getId().equals(id) && userLogged.getUserRole() != UserRole.ADMIN) {
             throw new IllegalArgumentException("Usuário não tem permissão para atualizar este usuário");

@@ -37,7 +37,7 @@ public class UserController {
     public ResponseEntity getUsersByRole(@PathVariable String role){
         try{
             UserRole userRole = UserRole.valueOf(role.toUpperCase());
-            var users = userService.findUsersByRole(userRole);
+            var users = userService.findUsersByRoleWithPreferences(userRole);
             return ResponseEntity.ok(users);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body("Role inválida: " + role);
