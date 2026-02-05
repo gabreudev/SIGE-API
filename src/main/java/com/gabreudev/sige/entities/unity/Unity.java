@@ -30,24 +30,29 @@ public class Unity {
     @JoinColumn(name = "preceptor_id")
     private User preceptor;
 
+    @Column(name = "max_students_per_day")
+    private Integer maxStudentsPerDay = 2;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "json")
     private Map<String, Object> availability;
 
-    public Unity(String name, String address, UnityRole unityRole, User preceptor, Map<String, Object> availability) {
+    public Unity(String name, String address, UnityRole unityRole, User preceptor, Integer maxStudentsPerDay, Map<String, Object> availability) {
         this.name = name;
         this.address = address;
         this.unityRole = unityRole;
         this.preceptor = preceptor;
+        this.maxStudentsPerDay = maxStudentsPerDay != null ? maxStudentsPerDay : 2;
         this.availability = availability;
     }
 
-    public Unity(Unity existing, String name, String address, UnityRole unityRole, User preceptor, Map<String, Object> availability) {
+    public Unity(Unity existing, String name, String address, UnityRole unityRole, User preceptor, Integer maxStudentsPerDay, Map<String, Object> availability) {
         this.id = existing.id;
         this.name = name != null ? name : existing.name;
         this.address = address != null ? address : existing.address;
         this.unityRole = unityRole != null ? unityRole : existing.unityRole;
         this.preceptor = preceptor != null ? preceptor : existing.preceptor;
+        this.maxStudentsPerDay = maxStudentsPerDay != null ? maxStudentsPerDay : (existing.maxStudentsPerDay != null ? existing.maxStudentsPerDay : 2);
         this.availability = availability != null ? availability : existing.availability;
     }
 }

@@ -34,6 +34,7 @@ public class UnityService {
                 dto.address(),
                 dto.unityRole(),
                 preceptor,
+                dto.maxStudentsPerDay(),
                 dto.availability()
         );
 
@@ -56,6 +57,7 @@ public class UnityService {
                 dto.address(),
                 dto.unityRole(),
                 preceptor,
+                dto.maxStudentsPerDay(),
                 dto.availability()
         );
 

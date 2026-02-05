@@ -14,6 +14,7 @@ public record UnityResponseDTO(
         UnityRole unityRole,
         UUID preceptorId,
         String preceptorName,
+        Integer maxStudentsPerDay,
         Map<String, Object> availability
 ) {
     public UnityResponseDTO(Unity unity) {
@@ -24,6 +25,7 @@ public record UnityResponseDTO(
                 unity.getUnityRole(),
                 unity.getPreceptor() != null ? unity.getPreceptor().getId() : null,
                 unity.getPreceptor() != null ? unity.getPreceptor().getName() : null,
+                unity.getMaxStudentsPerDay(),
                 unity.getAvailability()
         );
     }

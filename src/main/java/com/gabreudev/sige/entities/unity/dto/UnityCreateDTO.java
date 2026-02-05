@@ -10,6 +10,7 @@ public record UnityCreateDTO(
         String address,
         UnityRole unityRole,
         UUID preceptorId,
+        Integer maxStudentsPerDay,
         Map<String, Object> availability
 ) {
 }
