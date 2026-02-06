@@ -27,7 +27,7 @@ public class Shift {
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "unity_id", nullable = false)
+    @JoinColumn(name = "unity_id", nullable = true)
     private Unity unity;
 
     @Enumerated(EnumType.STRING)

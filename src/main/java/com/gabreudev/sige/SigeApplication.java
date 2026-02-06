@@ -19,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @SpringBootApplication
 @Slf4j
@@ -200,43 +201,43 @@ public class SigeApplication {
 			// ========== CRIAR ALUNOS ==========
 
 			// Alunos da UBS Ipueiras II
-			createStudent(userRepository, passwordEncoder, "Sandy Pacheco", "sandy.pacheco", "20240001", false);
-			createStudent(userRepository, passwordEncoder, "Mariana Martins", "mariana.martins", "20240002", false);
+			createStudent(userRepository, passwordEncoder, "Sandy Pacheco", "sandy.pacheco", "20240001", false, ubsIpueiras.getId());
+			createStudent(userRepository, passwordEncoder, "Mariana Martins", "mariana.martins", "20240002", false, ubsIpueiras.getId());
 
 			// Alunos da UBS Belinha Nunes II
-			createStudent(userRepository, passwordEncoder, "Mara Walklecia Veloso", "mara.veloso", "20240003", false);
-			createStudent(userRepository, passwordEncoder, "Wyllyana Morais", "wyllyana.morais", "20240004", false);
+			createStudent(userRepository, passwordEncoder, "Mara Walklecia Veloso", "mara.veloso", "20240003", false, ubsBelinhaNunes2.getId());
+			createStudent(userRepository, passwordEncoder, "Wyllyana Morais", "wyllyana.morais", "20240004", false, ubsBelinhaNunes2.getId());
 
 			// Alunos da UBS Parque de Exposição
-			createStudent(userRepository, passwordEncoder, "Arielly Tavares", "arielly.tavares", "20240005", false);
-			createStudent(userRepository, passwordEncoder, "Jamilly Silva", "jamilly.silva", "20240006", false);
+			createStudent(userRepository, passwordEncoder, "Arielly Tavares", "arielly.tavares", "20240005", false, ubsParqueExposicao.getId());
+			createStudent(userRepository, passwordEncoder, "Jamilly Silva", "jamilly.silva", "20240006", false, ubsParqueExposicao.getId());
 
 			// Alunos da UBS Catavento
-			createStudent(userRepository, passwordEncoder, "Larissa Sousa", "larissa.sousa", "20240007", false);
-			createStudent(userRepository, passwordEncoder, "Maria Fernanda Carvalho", "maria.carvalho", "20240008", false);
+			createStudent(userRepository, passwordEncoder, "Larissa Sousa", "larissa.sousa", "20240007", false, ubsCatavento.getId());
+			createStudent(userRepository, passwordEncoder, "Maria Fernanda Carvalho", "maria.carvalho", "20240008", false, ubsCatavento.getId());
 
 			// Alunos da UBS Belinha Nunes I
-			createStudent(userRepository, passwordEncoder, "Larissa Silva", "larissa.silva", "20240009", false);
+			createStudent(userRepository, passwordEncoder, "Larissa Silva", "larissa.silva", "20240009", false, ubsBelinhaNunes1.getId());
 
 			// Alunos da UBS Pantanal
-			createStudent(userRepository, passwordEncoder, "Raniel Costa", "raniel.costa", "20240010", true);
-			createStudent(userRepository, passwordEncoder, "Sara Félix", "sara.felix", "20240011", false);
+			createStudent(userRepository, passwordEncoder, "Raniel Costa", "raniel.costa", "20240010", true, ubsPantanal.getId());
+			createStudent(userRepository, passwordEncoder, "Sara Félix", "sara.felix", "20240011", false, ubsPantanal.getId());
 
 			// Alunos da UBS Conduru
-			createStudent(userRepository, passwordEncoder, "Maria Lara Borges", "maria.borges", "20240012", false);
-			createStudent(userRepository, passwordEncoder, "Elanha Araújo", "elanha.araujo", "20240013", false);
+			createStudent(userRepository, passwordEncoder, "Maria Lara Borges", "maria.borges", "20240012", false, ubsConduru.getId());
+			createStudent(userRepository, passwordEncoder, "Elanha Araújo", "elanha.araujo", "20240013", false, ubsConduru.getId());
 
 			// Alunos da UBS Cecília Nery
-			createStudent(userRepository, passwordEncoder, "Ana Lívia Lima", "ana.lima", "20240014", false);
-			createStudent(userRepository, passwordEncoder, "Cauã Couto", "caua.couto", "20240015", true);
+			createStudent(userRepository, passwordEncoder, "Ana Lívia Lima", "ana.lima", "20240014", false, ubsCeciliaNery.getId());
+			createStudent(userRepository, passwordEncoder, "Cauã Couto", "caua.couto", "20240015", true, ubsCeciliaNery.getId());
 
 			// Alunos da UBS Belo Norte
-			createStudent(userRepository, passwordEncoder, "Marcos Gonçalves", "marcos.goncalves", "20240016", true);
-			createStudent(userRepository, passwordEncoder, "Chíntia Bezerra", "chintia.bezerra", "20240017", false);
+			createStudent(userRepository, passwordEncoder, "Marcos Gonçalves", "marcos.goncalves", "20240016", true, ubsBeloNorte.getId());
+			createStudent(userRepository, passwordEncoder, "Chíntia Bezerra", "chintia.bezerra", "20240017", false, ubsBeloNorte.getId());
 
 			// Alunos da UBS Boa Sorte
-			createStudent(userRepository, passwordEncoder, "Sarah Ramila", "sarah.ramila", "20240018", false);
-			createStudent(userRepository, passwordEncoder, "Naeli Lopes", "naeli.lopes", "20240019", false);
+			createStudent(userRepository, passwordEncoder, "Sarah Ramila", "sarah.ramila", "20240018", false, ubsBoaSorte.getId());
+			createStudent(userRepository, passwordEncoder, "Naeli Lopes", "naeli.lopes", "20240019", false, ubsBoaSorte.getId());
 
 			log.info("========================================");
 			log.info("✓ 10 UBS criadas com sucesso!");
@@ -252,7 +253,7 @@ public class SigeApplication {
 	}
 
 	private void createStudent(UserRepository userRepository, PasswordEncoder passwordEncoder,
-	                           String name, String username, String registration, Boolean male) {
+	                           String name, String username, String registration, Boolean male, UUID preferredUnityId) {
 		UserRegisterDTO studentDTO = new UserRegisterDTO(
 				username,
 				name,
@@ -264,6 +265,12 @@ public class SigeApplication {
 				male
 		);
 		User student = new User(studentDTO, passwordEncoder.encode("senha123"), UserRole.STUDENT);
+
+		// Configurar unidade preferida
+		if (preferredUnityId != null) {
+			student.getPreferredUnityIds().add(preferredUnityId);
+		}
+
 		userRepository.save(student);
 		log.info("✓ Aluno criado: " + name);
 	}

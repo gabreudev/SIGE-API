@@ -1,12 +1,12 @@
 package com.gabreudev.sige.controllers;
 
-import com.gabreudev.sige.entities.shift.dto.ShiftCreateDTO;
-import com.gabreudev.sige.entities.shift.dto.ShiftResponseDTO;
-import com.gabreudev.sige.entities.shift.dto.ShiftUpdateDTO;
+import com.gabreudev.sige.entities.shift.dto.*;
 import com.gabreudev.sige.infra.SecurityConfigurations;
+import com.gabreudev.sige.services.InternshipAllocationService;
 import com.gabreudev.sige.services.ShiftService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
+@Slf4j
 @RequestMapping("shifts")
 @RequiredArgsConstructor
 @SecurityRequirement(name = SecurityConfigurations.SECURITY)
@@ -22,6 +23,7 @@ import java.util.UUID;
 public class ShiftController {
 
     private final ShiftService shiftService;
+    private final InternshipAllocationService internshipAllocationService;
 
     @PostMapping
     public ResponseEntity<ShiftResponseDTO> create(@RequestBody ShiftCreateDTO dto) {
@@ -69,5 +71,12 @@ public class ShiftController {
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         shiftService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/allocate-students-internship1")
+    public ResponseEntity<InternshipAllocationResponseDTO> allocateInternship1(@RequestBody InternshipAllocationRequestDTO request) {
+        log.info("Received internship allocation request: {}", request);
+        InternshipAllocationResponseDTO response = internshipAllocationService.allocateInternship1(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
