@@ -12,7 +12,7 @@ import java.util.UUID;
 @Repository
 public interface ShiftReportRepository extends JpaRepository<ShiftReport, UUID> {
     Optional<ShiftReport> findByShiftId(UUID shiftId);
-    List<ShiftReport> findByShift_UserId(UUID userId);
+    List<ShiftReport> findByUserId(UUID userId);
     List<ShiftReport> findByStatus(ReportStatus status);
     List<ShiftReport> findByShift_Unity_Id(UUID unityId);
 }

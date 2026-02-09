@@ -1,5 +1,6 @@
 package com.gabreudev.sige.services;
 
+import com.gabreudev.sige.entities.report.ReportStatus;
 import com.gabreudev.sige.entities.shift.Shift;
 import com.gabreudev.sige.entities.shift.dto.ShiftCreateDTO;
 import com.gabreudev.sige.entities.shift.dto.ShiftResponseDTO;
@@ -96,5 +97,48 @@ public class ShiftService {
             throw new RuntimeException("Shift not found");
         }
         shiftRepository.deleteById(id);
+    }
+
+    // Métodos úteis para contabilização
+    public List<ShiftResponseDTO> findWithReports() {
+        return shiftRepository.findAll().stream()
+                .filter(shift -> shift.getReport() != null)
+                .map(ShiftResponseDTO::new)
+                .toList();
+    }
+
+    public List<ShiftResponseDTO> findWithApprovedReports() {
+        return shiftRepository.findAll().stream()
+                .filter(shift -> shift.getReport() != null && shift.getReport().getStatus() == ReportStatus.APPROVED)
+                .map(ShiftResponseDTO::new)
+                .toList();
+    }
+
+    public List<ShiftResponseDTO> findWithPendingReports() {
+        return shiftRepository.findAll().stream()
+                .filter(shift -> shift.getReport() != null && shift.getReport().getStatus() == ReportStatus.SUBMITTED)
+                .map(ShiftResponseDTO::new)
+                .toList();
+    }
+
+    public List<ShiftResponseDTO> findWithRejectedReports() {
+        return shiftRepository.findAll().stream()
+                .filter(shift -> shift.getReport() != null && shift.getReport().getStatus() == ReportStatus.REJECTED)
+                .map(ShiftResponseDTO::new)
+                .toList();
+    }
+
+    public List<ShiftResponseDTO> findWithoutReports() {
+        return shiftRepository.findAll().stream()
+                .filter(shift -> shift.getReport() == null)
+                .map(ShiftResponseDTO::new)
+                .toList();
+    }
+
+    public List<ShiftResponseDTO> findByUserIdWithReportStatus(UUID userId, ReportStatus status) {
+        return shiftRepository.findByUserId(userId).stream()
+                .filter(shift -> shift.getReport() != null && shift.getReport().getStatus() == status)
+                .map(ShiftResponseDTO::new)
+                .toList();
     }
 }

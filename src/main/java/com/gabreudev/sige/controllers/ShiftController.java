@@ -1,5 +1,6 @@
 package com.gabreudev.sige.controllers;
 
+import com.gabreudev.sige.entities.report.ReportStatus;
 import com.gabreudev.sige.entities.shift.dto.*;
 import com.gabreudev.sige.infra.SecurityConfigurations;
 import com.gabreudev.sige.services.InternshipAllocationService;
@@ -66,6 +67,44 @@ public class ShiftController {
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         shiftService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/with-reports")
+    public ResponseEntity<List<ShiftResponseDTO>> findWithReports() {
+        List<ShiftResponseDTO> shifts = shiftService.findWithReports();
+        return ResponseEntity.ok(shifts);
+    }
+
+    @GetMapping("/reports/approved")
+    public ResponseEntity<List<ShiftResponseDTO>> findWithApprovedReports() {
+        List<ShiftResponseDTO> shifts = shiftService.findWithApprovedReports();
+        return ResponseEntity.ok(shifts);
+    }
+
+    @GetMapping("/reports/pending")
+    public ResponseEntity<List<ShiftResponseDTO>> findWithPendingReports() {
+        List<ShiftResponseDTO> shifts = shiftService.findWithPendingReports();
+        return ResponseEntity.ok(shifts);
+    }
+
+    @GetMapping("/reports/rejected")
+    public ResponseEntity<List<ShiftResponseDTO>> findWithRejectedReports() {
+        List<ShiftResponseDTO> shifts = shiftService.findWithRejectedReports();
+        return ResponseEntity.ok(shifts);
+    }
+
+    @GetMapping("/reports/none")
+    public ResponseEntity<List<ShiftResponseDTO>> findWithoutReports() {
+        List<ShiftResponseDTO> shifts = shiftService.findWithoutReports();
+        return ResponseEntity.ok(shifts);
+    }
+
+    @GetMapping("/user/{userId}/reports/{status}")
+    public ResponseEntity<List<ShiftResponseDTO>> findByUserIdWithReportStatus(
+            @PathVariable UUID userId,
+            @PathVariable ReportStatus status) {
+        List<ShiftResponseDTO> shifts = shiftService.findByUserIdWithReportStatus(userId, status);
+        return ResponseEntity.ok(shifts);
     }
 
     @PostMapping("/allocate-students-internship1")

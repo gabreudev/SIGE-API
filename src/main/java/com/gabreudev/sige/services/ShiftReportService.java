@@ -30,6 +30,9 @@ public class ShiftReportService {
         Shift shift = shiftRepository.findById(dto.shiftId())
                 .orElseThrow(() -> new RuntimeException("Shift not found"));
 
+        User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         // Verify that the shift belongs to the student
         if (!shift.getUser().getId().equals(studentId)) {
             throw new RuntimeException("You can only create reports for your own shifts");
@@ -42,6 +45,7 @@ public class ShiftReportService {
 
         ShiftReport report = new ShiftReport();
         report.setShift(shift);
+        report.setUser(student);
         report.setContent(dto.content());
         report.setStatus(ReportStatus.SUBMITTED);
         report.setSubmittedAt(LocalDateTime.now());
@@ -56,7 +60,7 @@ public class ShiftReportService {
                 .orElseThrow(() -> new RuntimeException("Report not found"));
 
         // Verify that the report belongs to the user
-        if (!report.getShift().getUser().getId().equals(userId)) {
+        if (!report.getUser().getId().equals(userId)) {
             throw new RuntimeException("You can only update your own reports");
         }
 
@@ -118,7 +122,7 @@ public class ShiftReportService {
     }
 
     public List<ShiftReportResponseDTO> findByUserId(UUID userId) {
-        return shiftReportRepository.findByShift_UserId(userId).stream()
+        return shiftReportRepository.findByUserId(userId).stream()
                 .map(ShiftReportResponseDTO::new)
                 .toList();
     }
@@ -150,7 +154,7 @@ public class ShiftReportService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (!report.getShift().getUser().getId().equals(userId) && user.getUserRole() != UserRole.ADMIN) {
+        if (!report.getUser().getId().equals(userId) && user.getUserRole() != UserRole.ADMIN) {
             throw new RuntimeException("You can only delete your own reports");
         }
 

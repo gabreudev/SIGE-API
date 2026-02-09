@@ -1,5 +1,6 @@
 package com.gabreudev.sige.entities.shift.dto;
 
+import com.gabreudev.sige.entities.report.ReportStatus;
 import com.gabreudev.sige.entities.shift.Shift;
 import com.gabreudev.sige.entities.shift.ShiftPeriod;
 import com.gabreudev.sige.entities.shift.ShiftType;
@@ -17,7 +18,10 @@ public record ShiftResponseDTO(
         ShiftType type,
         Integer hours,
         ShiftPeriod period,
-        LocalDate date
+        LocalDate date,
+        UUID reportId,
+        ReportStatus reportStatus,
+        Boolean hasReport
 ) {
     public ShiftResponseDTO(Shift shift) {
         this(
@@ -30,7 +34,10 @@ public record ShiftResponseDTO(
                 shift.getType(),
                 shift.getHours(),
                 shift.getPeriod(),
-                shift.getDate()
+                shift.getDate(),
+                shift.getReport() != null ? shift.getReport().getId() : null,
+                shift.getReport() != null ? shift.getReport().getStatus() : null,
+                shift.getReport() != null
         );
     }
 }

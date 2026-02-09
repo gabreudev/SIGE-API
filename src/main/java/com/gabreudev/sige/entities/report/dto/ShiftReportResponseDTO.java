@@ -8,10 +8,14 @@ import java.util.UUID;
 
 public record ShiftReportResponseDTO(
         UUID id,
+        UUID userId,
+        String userName,
+        String userRegistration,
         UUID shiftId,
         String shiftDate,
         String shiftType,
-        Integer hours, String content,
+        Integer hours,
+        String content,
         ReportStatus status,
         LocalDateTime createdAt,
         LocalDateTime submittedAt,
@@ -22,6 +26,9 @@ public record ShiftReportResponseDTO(
     public ShiftReportResponseDTO(ShiftReport report) {
         this(
                 report.getId(),
+                report.getUser().getId(),
+                report.getUser().getName(),
+                report.getUser().getRegistration(),
                 report.getShift().getId(),
                 report.getShift().getDate().toString(),
                 report.getShift().getType().name(),

@@ -44,6 +44,7 @@ public class Shift {
     @Column(nullable = false)
     private LocalDate date;
 
-    @OneToOne(mappedBy = "shift", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "report_id", referencedColumnName = "id")
     private ShiftReport report;
 }
