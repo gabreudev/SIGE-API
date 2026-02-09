@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,8 +31,8 @@ public class ShiftService {
         User user = userRepository.findById(dto.userId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Unity unity = unityRepository.findById(dto.unityId())
-                .orElseThrow(() -> new RuntimeException("Unity not found"));
+        Unity unity = dto.unityId() != null ? unityRepository.findById(dto.unityId())
+                .orElseThrow(() -> new RuntimeException("Unity not found")) : null;
 
         Shift shift = new Shift();
         shift.setUser(user);
@@ -42,17 +41,6 @@ public class ShiftService {
         shift.setHours(dto.hours());
         shift.setPeriod(dto.period());
         shift.setDate(dto.date());
-        shift.setValidated(dto.validated() != null ? dto.validated() : false);
-
-        if (dto.validationDate() != null) {
-            shift.setValidationDate(dto.validationDate());
-        }
-
-        if (dto.validatedByUserId() != null) {
-            User validatedByUser = userRepository.findById(dto.validatedByUserId())
-                    .orElseThrow(() -> new RuntimeException("Validated by user not found"));
-            shift.setValidatedBy(validatedByUser);
-        }
 
         Shift saved = shiftRepository.save(shift);
         return new ShiftResponseDTO(saved);
@@ -96,34 +84,11 @@ public class ShiftService {
         if (dto.hours() != null) shift.setHours(dto.hours());
         if (dto.period() != null) shift.setPeriod(dto.period());
         if (dto.date() != null) shift.setDate(dto.date());
-        if (dto.validated() != null) shift.setValidated(dto.validated());
-        if (dto.validationDate() != null) shift.setValidationDate(dto.validationDate());
-
-        if (dto.validatedByUserId() != null) {
-            User validatedByUser = userRepository.findById(dto.validatedByUserId())
-                    .orElseThrow(() -> new RuntimeException("Validated by user not found"));
-            shift.setValidatedBy(validatedByUser);
-        }
 
         Shift updated = shiftRepository.save(shift);
         return new ShiftResponseDTO(updated);
     }
 
-    @Transactional
-    public ShiftResponseDTO validateShift(UUID shiftId, UUID validatedByUserId) {
-        Shift shift = shiftRepository.findById(shiftId)
-                .orElseThrow(() -> new RuntimeException("Shift not found"));
-
-        User validatedByUser = userRepository.findById(validatedByUserId)
-                .orElseThrow(() -> new RuntimeException("Validated by user not found"));
-
-        shift.setValidated(true);
-        shift.setValidationDate(LocalDateTime.now());
-        shift.setValidatedBy(validatedByUser);
-
-        Shift validated = shiftRepository.save(shift);
-        return new ShiftResponseDTO(validated);
-    }
 
     @Transactional
     public void delete(UUID id) {

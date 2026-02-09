@@ -67,7 +67,7 @@ public class InternshipAllocationService {
 
             List<Shift> studentShifts = new ArrayList<>();
 
-            // ETAPA 1: CIRCUITO (30h = 5 dias × 6h) - sem unidade específica
+            // ETAPA 1: CIRCUITO (20h = 5 dias × 4h) - sem unidade específica
             LocalDate circuitStartDate = request.startDate();
             List<Shift> circuitShifts = allocateCircuit(student, circuitStartDate);
             studentShifts.addAll(circuitShifts);
@@ -81,7 +81,7 @@ public class InternshipAllocationService {
             log.info("Unidade selecionada: {}", selectedUnity.getName());
 
 
-            // ETAPA 3: ESTÁGIO (210h)
+            // ETAPA 3: ESTÁGIO (300h = 75 turnos × 4h)
             List<Shift> internshipShifts = allocateInternship(
                     student,
                     selectedUnity,
@@ -102,7 +102,7 @@ public class InternshipAllocationService {
             studentShifts.addAll(reportShifts);
             log.info("Relatórios alocados: {} turnos", reportShifts.size());
 
-            // ETAPA 5: ESTUDO DE CASO (30h = 5 dias × 6h)
+            // ETAPA 5: ESTUDO DE CASO (20h = 5 dias × 4h)
             LocalDate caseStudyStart = internshipShifts.get(internshipShifts.size() - 1).getDate();
             caseStudyStart = getNextWorkday(caseStudyStart);
             List<Shift> caseStudyShifts = allocateCaseStudy(
@@ -115,11 +115,24 @@ public class InternshipAllocationService {
             studentShifts.addAll(caseStudyShifts);
             log.info("Estudo de caso alocado: {} turnos", caseStudyShifts.size());
 
+            // Calcular total de horas alocadas
+            int totalHoursAllocated = studentShifts.stream()
+                    .mapToInt(Shift::getHours)
+                    .sum();
+
             // Salvar todos os turnos
             shiftRepository.saveAll(studentShifts);
             totalShiftsCreated += studentShifts.size();
 
-            log.info("Total de turnos criados para {}: {}", student.getName(), studentShifts.size());
+            log.info("========================================");
+            log.info("RESUMO ALOCAÇÃO - {}", student.getName());
+            log.info("Circuito: {} turnos (20h)", circuitShifts.size());
+            log.info("Estágio: {} turnos (300h)", internshipShifts.size());
+            log.info("Relatórios: {} turnos (30h)", reportShifts.size());
+            log.info("Estudo de Caso: {} turnos (20h)", caseStudyShifts.size());
+            log.info("TOTAL DE TURNOS: {}", studentShifts.size());
+            log.info("TOTAL DE HORAS: {}h (esperado: 370h)", totalHoursAllocated);
+            log.info("========================================");
         }
 
         return new InternshipAllocationResponseDTO(
@@ -132,9 +145,13 @@ public class InternshipAllocationService {
     private List<Shift> allocateCircuit(User student, LocalDate startDate) {
         List<Shift> shifts = new ArrayList<>();
         LocalDate currentDate = startDate;
+        int hoursPerShift = 4; // 4 horas por turno
+        int totalDays = 5; // 5 dias úteis
+        int totalHours = totalDays * hoursPerShift; // 20 horas
 
         log.info("=== INÍCIO ALOCAÇÃO CIRCUITO ===");
         log.info("Data de início fornecida: {} ({})", startDate, startDate.getDayOfWeek());
+        log.info("Meta: {} dias × {}h = {}h", totalDays, hoursPerShift, totalHours);
 
         // Se a data inicial não for um dia útil, avançar para o próximo dia útil
         while (!isWorkday(currentDate)) {
@@ -144,9 +161,9 @@ public class InternshipAllocationService {
 
         log.info("Primeira data útil para circuito: {} ({})", currentDate, currentDate.getDayOfWeek());
 
-        // 5 dias úteis × 6 horas = 30 horas
+        // Alocar 5 dias úteis de circuito
         int daysAllocated = 0;
-        while (daysAllocated < 5) {
+        while (daysAllocated < totalDays) {
             // Garantir que é dia útil
             if (!isWorkday(currentDate)) {
                 log.info("Data {} ({}) não é dia útil, pulando para próximo dia...", currentDate, currentDate.getDayOfWeek());
@@ -160,10 +177,9 @@ public class InternshipAllocationService {
             shift.setUser(student);
             shift.setUnity(null); // Circuito não requer unidade específica
             shift.setType(ShiftType.CIRCUIT);
-            shift.setHours(6);
+            shift.setHours(hoursPerShift);
             shift.setPeriod(ShiftPeriod.AFTERNOON);
             shift.setDate(currentDate);
-            shift.setValidated(false);
             shifts.add(shift);
 
             daysAllocated++;
@@ -174,7 +190,7 @@ public class InternshipAllocationService {
         }
 
         log.info("=== FIM ALOCAÇÃO CIRCUITO ===");
-        log.info("Total de {} dias úteis alocados para circuito", daysAllocated);
+        log.info("Total de {} dias úteis alocados = {}h", daysAllocated, totalHours);
         return shifts;
     }
 
@@ -316,10 +332,16 @@ public class InternshipAllocationService {
         List<Shift> shifts = new ArrayList<>();
         LocalDate currentDate = startDate;
         int totalHours = 0;
-        int targetHours = 210;
+        int targetHours = 300; // 300 horas de estágio
+        int hoursPerShift = 4; // 4 horas por turno
+        int targetShifts = targetHours / hoursPerShift; // 75 turnos
+        int shiftsPerWeek = 5; // 5 turnos por semana (1 por dia útil)
+        int targetWeeks = targetShifts / shiftsPerWeek; // 15 semanas
 
         log.info("=== INÍCIO ALOCAÇÃO ESTÁGIO ===");
         log.info("Data de início fornecida: {} ({})", startDate, startDate.getDayOfWeek());
+        log.info("Meta: {}h = {} turnos de {}h (~{} semanas, {} turnos/semana)", 
+                targetHours, targetShifts, hoursPerShift, targetWeeks, shiftsPerWeek);
 
         Map<String, Object> availability = unity.getAvailability();
         if (availability == null || availability.isEmpty()) {
@@ -340,65 +362,121 @@ public class InternshipAllocationService {
                 Map<String, Boolean> dayAvailability = (Map<String, Boolean>) availability.get(dayOfWeek);
 
                 if (dayAvailability != null) {
-                    // Tentar manhã
-                    if (Boolean.TRUE.equals(dayAvailability.get("morning"))) {
+                    boolean morningAvailable = Boolean.TRUE.equals(dayAvailability.get("morning"));
+                    boolean afternoonAvailable = Boolean.TRUE.equals(dayAvailability.get("afternoon"));
+
+                    // REGRA: Alocar 1 turno de 4h por dia conforme disponibilidade da unidade
+                    // - Se apenas manhã disponível: aloca manhã
+                    // - Se apenas tarde disponível: aloca tarde
+                    // - Se ambos disponíveis: aloca manhã (ou alterna)
+                    // - Se nenhum disponível: pula o dia
+                    
+                    boolean allocated = false;
+
+                    // Verificar disponibilidade de manhã
+                    if (morningAvailable && !allocated) {
                         if (!hasConflict(student, currentDate, ShiftPeriod.MORNING, existingShifts, shifts)) {
-                            Shift shift = createShift(student, unity, currentDate, ShiftPeriod.MORNING, ShiftType.INTERNSHIP, 6);
+                            Shift shift = createShift(student, unity, currentDate, ShiftPeriod.MORNING, ShiftType.INTERNSHIP, hoursPerShift);
                             shifts.add(shift);
-                            totalHours += 6;
-                            log.info("Estágio alocado - manhã: {} ({}) - Total: {}h", currentDate, currentDate.getDayOfWeek(), totalHours);
-                            if (totalHours >= targetHours) break;
+                            totalHours += hoursPerShift;
+                            allocated = true;
+                            log.info("Estágio alocado - {} disponível: MANHÃ em {} ({}) - Total: {}h / {}h", 
+                                    (morningAvailable && afternoonAvailable) ? "Manhã e Tarde" : "Manhã", 
+                                    currentDate, currentDate.getDayOfWeek(), totalHours, targetHours);
                         }
                     }
 
-                    // Tentar tarde
-                    if (Boolean.TRUE.equals(dayAvailability.get("afternoon"))) {
+                    // Verificar disponibilidade de tarde (se manhã não foi alocada)
+                    if (afternoonAvailable && !allocated) {
                         if (!hasConflict(student, currentDate, ShiftPeriod.AFTERNOON, existingShifts, shifts)) {
-                            Shift shift = createShift(student, unity, currentDate, ShiftPeriod.AFTERNOON, ShiftType.INTERNSHIP, 6);
+                            Shift shift = createShift(student, unity, currentDate, ShiftPeriod.AFTERNOON, ShiftType.INTERNSHIP, hoursPerShift);
                             shifts.add(shift);
-                            totalHours += 6;
-                            log.info("Estágio alocado - tarde: {} ({}) - Total: {}h", currentDate, currentDate.getDayOfWeek(), totalHours);
-                            if (totalHours >= targetHours) break;
+                            totalHours += hoursPerShift;
+                            allocated = true;
+                            log.info("Estágio alocado - Tarde disponível: TARDE em {} ({}) - Total: {}h / {}h", 
+                                    currentDate, currentDate.getDayOfWeek(), totalHours, targetHours);
                         }
                     }
+
+                    // Log se o dia não teve disponibilidade ou teve conflito
+                    if (!allocated && (morningAvailable || afternoonAvailable)) {
+                        log.debug("Não foi possível alocar em {} - Conflito ou já alocado", currentDate);
+                    }
+
+                    if (totalHours >= targetHours) break;
                 }
             }
             currentDate = currentDate.plusDays(1);
         }
 
         if (totalHours < targetHours) {
-            throw new RuntimeException("Não foi possível alocar as 210 horas de estágio para o estudante: " + student.getName());
+            throw new RuntimeException("Não foi possível alocar as " + targetHours + " horas de estágio para o estudante: " + student.getName());
         }
 
+        int weeksUsed = (int) Math.ceil((double) shifts.size() / shiftsPerWeek);
+        log.info("=== FIM ALOCAÇÃO ESTÁGIO ===");
+        log.info("Total de {}h alocadas em {} turnos de {}h (~{} semanas)", totalHours, shifts.size(), hoursPerShift, weeksUsed);
         return shifts;
     }
 
     private List<Shift> allocateReports(User student, Unity unity, List<Shift> internshipShifts, List<Shift> allExistingShifts) {
         List<Shift> reportShifts = new ArrayList<>();
         int totalHours = 0;
-        int targetHours = 30; // 15 turnos × 2h
+
+        log.info("=== INÍCIO ALOCAÇÃO RELATÓRIOS ===");
+        log.info("Alocando 1 relatório de 2h por semana de estágio");
 
         // Agrupar turnos de estágio por semana
         Map<Integer, List<Shift>> shiftsByWeek = internshipShifts.stream()
                 .collect(Collectors.groupingBy(shift -> getWeekNumber(shift.getDate())));
 
-        for (Map.Entry<Integer, List<Shift>> entry : shiftsByWeek.entrySet()) {
-            if (totalHours >= targetHours) break;
+        log.info("Total de semanas com estágio: {}", shiftsByWeek.size());
 
+        // Alocar exatamente 1 relatório por semana (no primeiro dia da semana)
+        for (Map.Entry<Integer, List<Shift>> entry : shiftsByWeek.entrySet()) {
             List<Shift> weekShifts = entry.getValue();
-            // Pegar o primeiro dia da semana
+            // Ordenar turnos da semana por data
+            weekShifts.sort((s1, s2) -> s1.getDate().compareTo(s2.getDate()));
+            
+            // Pegar o primeiro dia da semana com estágio
             LocalDate reportDate = weekShifts.get(0).getDate();
 
-            // Tentar alocar relatório em período oposto ao estágio
+            // Alocar relatório em período oposto ao estágio
             ShiftPeriod internshipPeriod = weekShifts.get(0).getPeriod();
             ShiftPeriod reportPeriod = internshipPeriod == ShiftPeriod.MORNING ? ShiftPeriod.AFTERNOON : ShiftPeriod.MORNING;
 
+            // Verificar conflito antes de alocar
             if (!hasConflict(student, reportDate, reportPeriod, allExistingShifts, reportShifts)) {
                 Shift reportShift = createShift(student, unity, reportDate, reportPeriod, ShiftType.REPORT, 2);
                 reportShifts.add(reportShift);
                 totalHours += 2;
+                log.info("Relatório semana {}: {} ({}) - período {}", entry.getKey(), reportDate, reportDate.getDayOfWeek(), reportPeriod);
+            } else {
+                // Se houver conflito no primeiro dia, tentar outros dias da mesma semana
+                boolean allocated = false;
+                for (Shift internshipShift : weekShifts) {
+                    if (allocated) break;
+                    
+                    LocalDate altDate = internshipShift.getDate();
+                    ShiftPeriod altPeriod = internshipShift.getPeriod() == ShiftPeriod.MORNING ? ShiftPeriod.AFTERNOON : ShiftPeriod.MORNING;
+                    
+                    if (!hasConflict(student, altDate, altPeriod, allExistingShifts, reportShifts)) {
+                        Shift reportShift = createShift(student, unity, altDate, altPeriod, ShiftType.REPORT, 2);
+                        reportShifts.add(reportShift);
+                        totalHours += 2;
+                        allocated = true;
+                        log.info("Relatório semana {} (alternativo): {} ({}) - período {}", entry.getKey(), altDate, altDate.getDayOfWeek(), altPeriod);
+                    }
+                }
+                
+                if (!allocated) {
+                    log.warn("Não foi possível alocar relatório na semana {}", entry.getKey());
+                }
             }
         }
+
+        log.info("=== FIM ALOCAÇÃO RELATÓRIOS ===");
+        log.info("Total de relatórios alocados: {} ({}h de {} semanas)", reportShifts.size(), totalHours, shiftsByWeek.size());
 
         return reportShifts;
     }
@@ -406,9 +484,13 @@ public class InternshipAllocationService {
     private List<Shift> allocateCaseStudy(User student, Unity unity, LocalDate startDate, LocalDate endDate, List<Shift> existingShifts) {
         List<Shift> shifts = new ArrayList<>();
         LocalDate currentDate = startDate;
+        int hoursPerShift = 4; // 4 horas por turno
+        int totalDays = 5; // 5 dias úteis
+        int totalHours = totalDays * hoursPerShift; // 20 horas
 
         log.info("=== INÍCIO ALOCAÇÃO ESTUDO DE CASO ===");
         log.info("Data de início fornecida: {} ({})", startDate, startDate.getDayOfWeek());
+        log.info("Meta: {} dias × {}h = {}h", totalDays, hoursPerShift, totalHours);
 
         // Se a data inicial não for um dia útil, avançar para o próximo dia útil
         while (!isWorkday(currentDate)) {
@@ -418,10 +500,9 @@ public class InternshipAllocationService {
 
         log.info("Primeira data útil para estudo de caso: {} ({})", currentDate, currentDate.getDayOfWeek());
 
-        int totalHours = 0;
-        int targetHours = 30; // 5 dias × 6h
-
-        while (totalHours < targetHours && !currentDate.isAfter(endDate)) {
+        // Alocar 5 dias úteis de estudo de caso
+        int daysAllocated = 0;
+        while (daysAllocated < totalDays && !currentDate.isAfter(endDate)) {
             // Pular finais de semana
             if (!isWorkday(currentDate)) {
                 log.info("Data {} não é dia útil, pulando...", currentDate);
@@ -429,67 +510,34 @@ public class InternshipAllocationService {
                 continue;
             }
 
-            if (!currentDate.isAfter(endDate)) {
-                // Tentar manhã primeiro
-                if (!hasConflict(student, currentDate, ShiftPeriod.MORNING, existingShifts, shifts)) {
-                    Shift shift = createShift(student, unity, currentDate, ShiftPeriod.MORNING, ShiftType.CASE_STUDY, 6);
-                    shifts.add(shift);
-                    totalHours += 6;
-                    log.info("Estudo de caso alocado - manhã: {} ({}) - Total: {}h", currentDate, currentDate.getDayOfWeek(), totalHours);
-                } else if (!hasConflict(student, currentDate, ShiftPeriod.AFTERNOON, existingShifts, shifts)) {
-                    // Se manhã tiver conflito, tentar tarde
-                    Shift shift = createShift(student, unity, currentDate, ShiftPeriod.AFTERNOON, ShiftType.CASE_STUDY, 6);
-                    shifts.add(shift);
-                    totalHours += 6;
-                    log.info("Estudo de caso alocado - tarde: {} ({}) - Total: {}h", currentDate, currentDate.getDayOfWeek(), totalHours);
-                }
+            // Tentar alocar 1 turno neste dia (preferência: manhã, alternativa: tarde)
+            boolean allocated = false;
+            
+            // Tentar manhã primeiro
+            if (!hasConflict(student, currentDate, ShiftPeriod.MORNING, existingShifts, shifts)) {
+                Shift shift = createShift(student, unity, currentDate, ShiftPeriod.MORNING, ShiftType.CASE_STUDY, hoursPerShift);
+                shifts.add(shift);
+                daysAllocated++;
+                allocated = true;
+                log.info("Estudo de caso alocado dia {} - manhã: {} ({})", daysAllocated, currentDate, currentDate.getDayOfWeek());
+            } else if (!hasConflict(student, currentDate, ShiftPeriod.AFTERNOON, existingShifts, shifts)) {
+                // Se manhã tiver conflito, tentar tarde
+                Shift shift = createShift(student, unity, currentDate, ShiftPeriod.AFTERNOON, ShiftType.CASE_STUDY, hoursPerShift);
+                shifts.add(shift);
+                daysAllocated++;
+                allocated = true;
+                log.info("Estudo de caso alocado dia {} - tarde: {} ({})", daysAllocated, currentDate, currentDate.getDayOfWeek());
             }
+
             currentDate = currentDate.plusDays(1);
         }
 
-        // Se não conseguir dias suficientes antes do fim, permitir alocar em dias já usados em turno oposto
-        if (totalHours < targetHours) {
-            currentDate = startDate;
-            // Garantir que começa em dia útil
-            while (!isWorkday(currentDate)) {
-                currentDate = currentDate.plusDays(1);
-            }
-
-            while (totalHours < targetHours && !currentDate.isAfter(endDate)) {
-                // Garantir que é dia útil
-                while (!isWorkday(currentDate) && !currentDate.isAfter(endDate)) {
-                    currentDate = currentDate.plusDays(1);
-                }
-
-                if (!currentDate.isAfter(endDate)) {
-                    // Criar variável final para uso na lambda
-                    final LocalDate dateToCheck = currentDate;
-
-                    // Verificar se já existe turno nesse dia
-                    List<Shift> shiftsOnDate = existingShifts.stream()
-                            .filter(s -> s.getDate().equals(dateToCheck))
-                            .collect(Collectors.toList());
-
-                    if (!shiftsOnDate.isEmpty()) {
-                        // Pegar período oposto
-                        ShiftPeriod existingPeriod = shiftsOnDate.get(0).getPeriod();
-                        ShiftPeriod oppositePeriod = existingPeriod == ShiftPeriod.MORNING ? ShiftPeriod.AFTERNOON : ShiftPeriod.MORNING;
-
-                        if (!hasConflict(student, currentDate, oppositePeriod, existingShifts, shifts)) {
-                            Shift shift = createShift(student, unity, currentDate, oppositePeriod, ShiftType.CASE_STUDY, 6);
-                            shifts.add(shift);
-                            totalHours += 6;
-                        }
-                    }
-                }
-                currentDate = currentDate.plusDays(1);
-            }
+        if (daysAllocated < totalDays) {
+            throw new RuntimeException("Não foi possível alocar os " + totalDays + " dias de estudo de caso para o estudante: " + student.getName());
         }
 
-        if (totalHours < targetHours) {
-            throw new RuntimeException("Não foi possível alocar as 30 horas de estudo de caso para o estudante: " + student.getName());
-        }
-
+        log.info("=== FIM ALOCAÇÃO ESTUDO DE CASO ===");
+        log.info("Total de {} dias úteis alocados = {}h", daysAllocated, totalHours);
         return shifts;
     }
 
@@ -501,7 +549,6 @@ public class InternshipAllocationService {
         shift.setPeriod(period);
         shift.setType(type);
         shift.setHours(hours);
-        shift.setValidated(false);
         return shift;
     }
 

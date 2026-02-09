@@ -4,7 +4,6 @@ import com.gabreudev.sige.entities.shift.ShiftPeriod;
 import com.gabreudev.sige.entities.shift.ShiftType;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record ShiftCreateDTO(
@@ -13,8 +12,5 @@ public record ShiftCreateDTO(
         ShiftType type,
         Integer hours,
         ShiftPeriod period,
-        LocalDate date,
-        Boolean validated,
-        LocalDateTime validationDate,
-        UUID validatedByUserId
+        LocalDate date
 ) {}

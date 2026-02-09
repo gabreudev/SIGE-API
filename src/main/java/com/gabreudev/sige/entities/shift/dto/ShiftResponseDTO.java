@@ -5,7 +5,6 @@ import com.gabreudev.sige.entities.shift.ShiftPeriod;
 import com.gabreudev.sige.entities.shift.ShiftType;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record ShiftResponseDTO(
@@ -18,11 +17,7 @@ public record ShiftResponseDTO(
         ShiftType type,
         Integer hours,
         ShiftPeriod period,
-        LocalDate date,
-        Boolean validated,
-        LocalDateTime validationDate,
-        UUID validatedByUserId,
-        String validatedByUserName
+        LocalDate date
 ) {
     public ShiftResponseDTO(Shift shift) {
         this(
@@ -35,11 +30,7 @@ public record ShiftResponseDTO(
                 shift.getType(),
                 shift.getHours(),
                 shift.getPeriod(),
-                shift.getDate(),
-                shift.getValidated(),
-                shift.getValidationDate(),
-                shift.getValidatedBy() != null ? shift.getValidatedBy().getId() : null,
-                shift.getValidatedBy() != null ? shift.getValidatedBy().getName() : null
+                shift.getDate()
         );
     }
 }

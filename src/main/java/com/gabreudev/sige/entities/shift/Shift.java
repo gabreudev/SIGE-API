@@ -1,5 +1,6 @@
 package com.gabreudev.sige.entities.shift;
 
+import com.gabreudev.sige.entities.report.ShiftReport;
 import com.gabreudev.sige.entities.unity.Unity;
 import com.gabreudev.sige.entities.user.User;
 import jakarta.persistence.*;
@@ -8,7 +9,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -44,13 +44,6 @@ public class Shift {
     @Column(nullable = false)
     private LocalDate date;
 
-    @Column(nullable = false)
-    private Boolean validated = false;
-
-    @Column(name = "validation_date")
-    private LocalDateTime validationDate;
-
-    @ManyToOne
-    @JoinColumn(name = "validated_by_user_id")
-    private User validatedBy;
+    @OneToOne(mappedBy = "shift", cascade = CascadeType.ALL, orphanRemoval = true)
+    private ShiftReport report;
 }

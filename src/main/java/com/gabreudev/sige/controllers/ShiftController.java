@@ -61,11 +61,6 @@ public class ShiftController {
         return ResponseEntity.ok(updated);
     }
 
-    @PutMapping("/{id}/validate")
-    public ResponseEntity<ShiftResponseDTO> validate(@PathVariable UUID id, @RequestParam UUID validatedByUserId) {
-        ShiftResponseDTO validated = shiftService.validateShift(id, validatedByUserId);
-        return ResponseEntity.ok(validated);
-    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
