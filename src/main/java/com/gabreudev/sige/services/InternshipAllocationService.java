@@ -2,9 +2,11 @@ package com.gabreudev.sige.services;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.MonthDay;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -30,9 +32,22 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class InternshipAllocationService {
 
+    private static final Set<MonthDay> FIXED_NATIONAL_HOLIDAYS = Set.of(
+            MonthDay.of(1, 1),   // Confraternizacao Universal
+            MonthDay.of(4, 21),  // Tiradentes
+            MonthDay.of(5, 1),   // Dia do Trabalhador
+            MonthDay.of(9, 7),   // Independencia do Brasil
+            MonthDay.of(10, 12), // Nossa Senhora Aparecida
+            MonthDay.of(11, 2),  // Finados
+            MonthDay.of(11, 15), // Proclamacao da Republica
+            MonthDay.of(11, 20), // Dia da Consciencia Negra
+            MonthDay.of(12, 25)  // Natal
+    );
+
     private final ShiftRepository shiftRepository;
     private final UserRepository userRepository;
     private final UnityRepository unityRepository;
+    private final UnavailableDateService unavailableDateService;
 
     @Transactional
     public InternshipAllocationResponseDTO allocateInternship1(InternshipAllocationRequestDTO request) {
@@ -60,6 +75,9 @@ public class InternshipAllocationService {
             throw new RuntimeException("Nenhuma unidade válida foi encontrada");
         }
 
+        Set<LocalDate> unavailableDates = unavailableDateService
+            .getUnavailableDatesBetween(request.startDate(), request.endDate());
+
         int totalShiftsCreated = 0;
 
         for (User student : students) {
@@ -69,12 +87,12 @@ public class InternshipAllocationService {
 
             // ETAPA 1: CIRCUITO (30h = 5 dias × 6h) - sem unidade específica
             LocalDate circuitStartDate = request.startDate();
-            List<Shift> circuitShifts = allocateCircuit(student, circuitStartDate);
+            List<Shift> circuitShifts = allocateCircuit(student, circuitStartDate, unavailableDates);
             studentShifts.addAll(circuitShifts);
             log.info("Circuito alocado: {} turnos", circuitShifts.size());
 
             // Próxima data disponível após circuito
-            LocalDate afterCircuit = getNextWorkday(circuitShifts.get(circuitShifts.size() - 1).getDate());
+            LocalDate afterCircuit = getNextWorkday(circuitShifts.get(circuitShifts.size() - 1).getDate(), unavailableDates);
 
             // ETAPA 2: ESCOLHER UNIDADE
             Unity selectedUnity = selectUnityForStudent(student, availableUnities, request.unityIds());
@@ -87,7 +105,8 @@ public class InternshipAllocationService {
                     selectedUnity,
                     afterCircuit,
                     request.endDate(),
-                    studentShifts
+                        studentShifts,
+                        unavailableDates
             );
             studentShifts.addAll(internshipShifts);
             log.info("Estágio alocado: {} turnos", internshipShifts.size());
@@ -104,13 +123,14 @@ public class InternshipAllocationService {
 
             // ETAPA 5: ESTUDO DE CASO (30h = 5 dias × 6h)
             LocalDate caseStudyStart = internshipShifts.get(internshipShifts.size() - 1).getDate();
-            caseStudyStart = getNextWorkday(caseStudyStart);
+                caseStudyStart = getNextWorkday(caseStudyStart, unavailableDates);
             List<Shift> caseStudyShifts = allocateCaseStudy(
                     student,
                     null, // Estudo de caso não requer unidade específica
                     caseStudyStart,
                     request.endDate(),
-                    studentShifts
+                    studentShifts,
+                    unavailableDates
             );
             studentShifts.addAll(caseStudyShifts);
             log.info("Estudo de caso alocado: {} turnos", caseStudyShifts.size());
@@ -142,10 +162,10 @@ public class InternshipAllocationService {
         );
     }
 
-    private List<Shift> allocateCircuit(User student, LocalDate startDate) {
+    private List<Shift> allocateCircuit(User student, LocalDate startDate, Set<LocalDate> unavailableDates) {
         List<Shift> shifts = new ArrayList<>();
         LocalDate currentDate = startDate;
-        int hoursPerShift = 4; // 4 horas por turno
+        int hoursPerShift = 6; // 4 horas por turno
         int totalDays = 5; // 5 dias úteis
         int totalHours = totalDays * hoursPerShift; // 20 horas
 
@@ -154,7 +174,7 @@ public class InternshipAllocationService {
         log.info("Meta: {} dias × {}h = {}h", totalDays, hoursPerShift, totalHours);
 
         // Se a data inicial não for um dia útil, avançar para o próximo dia útil
-        while (!isWorkday(currentDate)) {
+        while (!isWorkday(currentDate, unavailableDates)) {
             log.info("Data {} ({}) não é dia útil, avançando...", currentDate, currentDate.getDayOfWeek());
             currentDate = currentDate.plusDays(1);
         }
@@ -165,7 +185,7 @@ public class InternshipAllocationService {
         int daysAllocated = 0;
         while (daysAllocated < totalDays) {
             // Garantir que é dia útil
-            if (!isWorkday(currentDate)) {
+            if (!isWorkday(currentDate, unavailableDates)) {
                 log.info("Data {} ({}) não é dia útil, pulando para próximo dia...", currentDate, currentDate.getDayOfWeek());
                 currentDate = currentDate.plusDays(1);
                 continue;
@@ -328,7 +348,7 @@ public class InternshipAllocationService {
         return distinctStudents < maxStudents;
     }
 
-    private List<Shift> allocateInternship(User student, Unity unity, LocalDate startDate, LocalDate endDate, List<Shift> existingShifts) {
+    private List<Shift> allocateInternship(User student, Unity unity, LocalDate startDate, LocalDate endDate, List<Shift> existingShifts, Set<LocalDate> unavailableDates) {
         List<Shift> shifts = new ArrayList<>();
         LocalDate currentDate = startDate;
         int totalHours = 0;
@@ -349,7 +369,7 @@ public class InternshipAllocationService {
         }
 
         // Se a data inicial não for um dia útil, avançar para o próximo dia útil
-        while (!isWorkday(currentDate)) {
+        while (!isWorkday(currentDate, unavailableDates)) {
             log.info("Data {} ({}) não é dia útil, avançando...", currentDate, currentDate.getDayOfWeek());
             currentDate = currentDate.plusDays(1);
         }
@@ -357,7 +377,7 @@ public class InternshipAllocationService {
         log.info("Primeira data útil para estágio: {} ({})", currentDate, currentDate.getDayOfWeek());
 
         while (totalHours < targetHours && !currentDate.isAfter(endDate)) {
-            if (isWorkday(currentDate)) {
+            if (isWorkday(currentDate, unavailableDates)) {
                 String dayOfWeek = getDayOfWeekKey(currentDate);
                 Map<String, Boolean> dayAvailability = (Map<String, Boolean>) availability.get(dayOfWeek);
 
@@ -481,10 +501,10 @@ public class InternshipAllocationService {
         return reportShifts;
     }
 
-    private List<Shift> allocateCaseStudy(User student, Unity unity, LocalDate startDate, LocalDate endDate, List<Shift> existingShifts) {
+    private List<Shift> allocateCaseStudy(User student, Unity unity, LocalDate startDate, LocalDate endDate, List<Shift> existingShifts, Set<LocalDate> unavailableDates) {
         List<Shift> shifts = new ArrayList<>();
         LocalDate currentDate = startDate;
-        int hoursPerShift = 4; // 4 horas por turno
+        int hoursPerShift = 6; // 6 horas por turno
         int totalDays = 5; // 5 dias úteis
         int totalHours = totalDays * hoursPerShift; // 20 horas
 
@@ -493,7 +513,7 @@ public class InternshipAllocationService {
         log.info("Meta: {} dias × {}h = {}h", totalDays, hoursPerShift, totalHours);
 
         // Se a data inicial não for um dia útil, avançar para o próximo dia útil
-        while (!isWorkday(currentDate)) {
+        while (!isWorkday(currentDate, unavailableDates)) {
             log.info("Data {} ({}) não é dia útil, avançando...", currentDate, currentDate.getDayOfWeek());
             currentDate = currentDate.plusDays(1);
         }
@@ -504,7 +524,7 @@ public class InternshipAllocationService {
         int daysAllocated = 0;
         while (daysAllocated < totalDays && !currentDate.isAfter(endDate)) {
             // Pular finais de semana
-            if (!isWorkday(currentDate)) {
+            if (!isWorkday(currentDate, unavailableDates)) {
                 log.info("Data {} não é dia útil, pulando...", currentDate);
                 currentDate = currentDate.plusDays(1);
                 continue;
@@ -568,14 +588,46 @@ public class InternshipAllocationService {
         return existingConflict || newConflict;
     }
 
-    private boolean isWorkday(LocalDate date) {
+    private boolean isWorkday(LocalDate date, Set<LocalDate> unavailableDates) {
         DayOfWeek dayOfWeek = date.getDayOfWeek();
-        return dayOfWeek != DayOfWeek.SATURDAY && dayOfWeek != DayOfWeek.SUNDAY;
+        return dayOfWeek != DayOfWeek.SATURDAY
+                && dayOfWeek != DayOfWeek.SUNDAY
+                && !isNationalHoliday(date)
+                && !unavailableDates.contains(date);
     }
 
-    private LocalDate getNextWorkday(LocalDate date) {
+    private boolean isNationalHoliday(LocalDate date) {
+        if (FIXED_NATIONAL_HOLIDAYS.contains(MonthDay.from(date))) {
+            return true;
+        }
+
+        // Feriado nacional movel: Sexta-Feira Santa (2 dias antes da Pascoa)
+        LocalDate easterDate = calculateEasterSunday(date.getYear());
+        return date.equals(easterDate.minusDays(2));
+    }
+
+    private LocalDate calculateEasterSunday(int year) {
+        // Algoritmo de Meeus/Jones/Butcher para calendario gregoriano
+        int a = year % 19;
+        int b = year / 100;
+        int c = year % 100;
+        int d = b / 4;
+        int e = b % 4;
+        int f = (b + 8) / 25;
+        int g = (b - f + 1) / 3;
+        int h = (19 * a + b - d - g + 15) % 30;
+        int i = c / 4;
+        int k = c % 4;
+        int l = (32 + 2 * e + 2 * i - h - k) % 7;
+        int m = (a + 11 * h + 22 * l) / 451;
+        int month = (h + l - 7 * m + 114) / 31;
+        int day = ((h + l - 7 * m + 114) % 31) + 1;
+        return LocalDate.of(year, month, day);
+    }
+
+    private LocalDate getNextWorkday(LocalDate date, Set<LocalDate> unavailableDates) {
         LocalDate nextDay = date.plusDays(1);
-        while (!isWorkday(nextDay)) {
+        while (!isWorkday(nextDay, unavailableDates)) {
             nextDay = nextDay.plusDays(1);
         }
         return nextDay;
