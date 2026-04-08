@@ -32,6 +32,17 @@ public class ShiftController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    // 🔥 ROTA ESPECÍFICA - DEVE VIR ANTES DE /{id}
+    @GetMapping("/with-validation")
+    public ResponseEntity<List<ShiftWithReportDTO>> getShiftsWithValidation(
+            @RequestParam(required = false) UUID userId,
+            @RequestParam(required = false) UUID unityId,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+        List<ShiftWithReportDTO> shifts = shiftService.findShiftsWithValidation(userId, unityId, startDate, endDate);
+        return ResponseEntity.ok(shifts);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ShiftResponseDTO> findById(@PathVariable UUID id) {
         ShiftResponseDTO shift = shiftService.findById(id);

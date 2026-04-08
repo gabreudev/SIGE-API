@@ -67,7 +67,7 @@ public class InternshipAllocationService {
 
             List<Shift> studentShifts = new ArrayList<>();
 
-            // ETAPA 1: CIRCUITO (20h = 5 dias × 4h) - sem unidade específica
+            // ETAPA 1: CIRCUITO (30h = 5 dias × 6h) - sem unidade específica
             LocalDate circuitStartDate = request.startDate();
             List<Shift> circuitShifts = allocateCircuit(student, circuitStartDate);
             studentShifts.addAll(circuitShifts);
@@ -102,7 +102,7 @@ public class InternshipAllocationService {
             studentShifts.addAll(reportShifts);
             log.info("Relatórios alocados: {} turnos", reportShifts.size());
 
-            // ETAPA 5: ESTUDO DE CASO (20h = 5 dias × 4h)
+            // ETAPA 5: ESTUDO DE CASO (30h = 5 dias × 6h)
             LocalDate caseStudyStart = internshipShifts.get(internshipShifts.size() - 1).getDate();
             caseStudyStart = getNextWorkday(caseStudyStart);
             List<Shift> caseStudyShifts = allocateCaseStudy(
